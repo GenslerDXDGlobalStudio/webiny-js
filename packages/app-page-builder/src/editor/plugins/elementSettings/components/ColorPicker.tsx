@@ -1,28 +1,57 @@
-import * as React from "react";
-import { connect } from "react-redux";
-import { get } from "lodash";
+import React from "react";
+import lodashGet from "lodash/get";
+import ColorPickerCmp from "../../../components/ColorPicker/ColorPicker";
+import { activeElementAtom, elementByIdSelector } from "../../../recoil/modules";
 import { Typography } from "@webiny/ui/Typography";
 import { Grid, Cell } from "@webiny/ui/Grid";
-import ColorPickerCmp from "@webiny/app-page-builder/editor/components/ColorPicker";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
+import { useRecoilValue } from "recoil";
+
+const extrapolateActiveElementValue = (
+    value?: string,
+    valueKey?: string,
+    defaultValue?: string
+): string | undefined => {
+    if (!valueKey) {
+        return value;
+    }
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementByIdSelector(activeElementId));
+    if (!element) {
+        throw new Error("There is no active element.");
+    }
+    return lodashGet(element, valueKey, defaultValue);
+};
 
 type ColorPickerProps = {
     label: string;
-    value: string;
+    value?: string;
+    valueKey?: string;
+    defaultValue?: string;
     updatePreview: Function;
     updateValue: Function;
+    className?: string;
+    handlerClassName?: string;
 };
 
-const ColorPicker = ({ label, value, updatePreview, updateValue }: ColorPickerProps) => {
+const ColorPicker = ({
+    label,
+    value,
+    valueKey,
+    defaultValue,
+    updatePreview,
+    updateValue,
+    className
+}: ColorPickerProps) => {
+    const targetValue = extrapolateActiveElementValue(value, valueKey, defaultValue);
     return (
-        <Grid>
+        <Grid className={className}>
             <Cell span={4}>
-                <Typography use={"overline"}>{label}</Typography>
+                <Typography use={"subtitle2"}>{label}</Typography>
             </Cell>
             <Cell span={8}>
                 <ColorPickerCmp
                     compact
-                    value={value}
+                    value={targetValue}
                     onChange={updatePreview}
                     onChangeComplete={updateValue}
                 />
@@ -31,16 +60,26 @@ const ColorPicker = ({ label, value, updatePreview, updateValue }: ColorPickerPr
     );
 };
 
-type ColorPickerConnectProps = {
-    value?: string;
-    valueKey?: string;
-    defaultValue?: string;
+export default React.memo(ColorPicker);
+
+export const BaseColorPickerComponent = ({
+    value,
+    valueKey,
+    defaultValue,
+    updatePreview,
+    updateValue,
+    handlerClassName
+}: Partial<ColorPickerProps>) => {
+    const targetValue = extrapolateActiveElementValue(value, valueKey, defaultValue);
+    return (
+        <ColorPickerCmp
+            handlerClassName={handlerClassName}
+            compact
+            value={targetValue}
+            onChange={updatePreview}
+            onChangeComplete={updateValue}
+        />
+    );
 };
 
-export default connect<any, any, any>(
-    (state, { value, valueKey, defaultValue }: ColorPickerConnectProps) => {
-        return {
-            value: valueKey ? get(getActiveElement(state), valueKey, defaultValue) : value
-        };
-    }
-)(React.memo(ColorPicker));
+export const BaseColorPicker = React.memo(BaseColorPickerComponent);

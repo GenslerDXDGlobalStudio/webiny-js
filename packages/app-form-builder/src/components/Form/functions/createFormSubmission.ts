@@ -1,8 +1,7 @@
-import { FbFormRenderComponentProps, FormSubmitResponseType } from "@webiny/app-form-builder/types";
+import { FbFormRenderComponentProps, FormSubmitResponseType } from "../../../types";
 
 import { CREATE_FORM_SUBMISSION } from "./graphql";
 import getClientIp from "./getClientIp";
-import { get } from "lodash";
 import { ApolloClient } from "apollo-client";
 
 type Args = {
@@ -40,7 +39,7 @@ export default async ({
     let response: any = await client.mutate({
         mutation: CREATE_FORM_SUBMISSION,
         variables: {
-            id: form.id,
+            revision: form.id,
             reCaptchaResponseToken,
             data,
             meta: {
@@ -49,11 +48,11 @@ export default async ({
         }
     });
 
-    response = get(response, "data.forms.createFormSubmission");
+    response = response?.data?.formBuilder?.createFormSubmission;
 
     return {
         preview: false,
         data: null,
-        error: response.error
+        error: response?.error
     };
 };

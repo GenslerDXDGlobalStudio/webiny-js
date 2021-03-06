@@ -3,7 +3,7 @@ import * as toolbar from "./toolbar";
 import { ImageEditorTool } from "./toolbar/types";
 import styled from "@emotion/styled";
 import classNames from "classnames";
-import { ButtonSecondary, ButtonPrimary } from "@webiny/ui/Button";
+import { ButtonSecondary, ButtonPrimary } from "../Button";
 import loadScript from "load-script";
 
 const Toolbar = styled("div")({
@@ -36,7 +36,7 @@ const ApplyCancelActions = styled("div")({
 });
 
 const initScripts = () => {
-    return new Promise(resolve => {
+    return new Promise((resolve: any) => {
         // @ts-ignore
         if (window.Caman) {
             return resolve();

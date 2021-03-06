@@ -1,11 +1,12 @@
-import * as React from "react";
+import React, { CSSProperties } from "react";
 import { css } from "emotion";
 import styled from "@emotion/styled";
+import classNames from "classnames";
 import { Typography } from "@webiny/ui/Typography";
 import { Select } from "@webiny/ui/Select";
-import RenderElement from "@webiny/app-page-builder/render/components/Element";
+import RenderElement from "../../../../render/components/Element";
+import useResponsiveClassName from "../../../../hooks/useResponsiveClassName";
 import Zoom from "./Zoom";
-import { PbPageDetailsContextValue } from "@webiny/app-page-builder/types";
 
 const pageInnerWrapper = css({
     overflowY: "scroll",
@@ -49,19 +50,22 @@ const PagePreviewToolbar = styled("div")({
 });
 
 type PagePreviewProps = {
-    pageDetails: PbPageDetailsContextValue;
+    page: Record<string, any>;
+    getPageQuery: Function;
 };
 
-const PagePreview = ({ pageDetails }: PagePreviewProps) => {
+const PagePreview = ({ page }: PagePreviewProps) => {
+    const { pageElementRef, responsiveClassName } = useResponsiveClassName();
+
     return (
         <Zoom>
             {({ zoom, setZoom }) => (
                 <div
-                    className={pageInnerWrapper}
-                    // @ts-ignore
-                    style={{ "--webiny-pb-page-preview-scale": zoom }}
+                    ref={pageElementRef}
+                    className={classNames(pageInnerWrapper, responsiveClassName)}
+                    style={{ "--webiny-pb-page-preview-scale": zoom } as CSSProperties}
                 >
-                    <RenderElement key={pageDetails.page.id} element={pageDetails.page.content} />
+                    <RenderElement key={page.id} element={page.content} />
                     <PagePreviewToolbar>
                         <span>
                             <Typography use={"overline"}>Zoom:&nbsp;</Typography>

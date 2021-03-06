@@ -7,7 +7,7 @@ const execa = require("execa");
     // Build all repo packages
     console.log(`🏗  Building packages...`);
     try {
-        await execa("lerna", ["run", "build", "--stream"], {
+        await execa("yarn", ["build"], {
             stdio: "inherit"
         });
         console.log(`✅️ Packages were built successfully!`);
@@ -15,10 +15,12 @@ const execa = require("execa");
         console.log(`🚨 Failed to build packages: ${err.message}`);
     }
 
-    console.log(`\n🏁 Your repo is almost ready!`);
+    console.log();
+    console.log(`🏁 Your repo is ready!`);
+    console.log(`💡 To deploy a new project, run ${green("yarn webiny deploy")} to deploy.`);
     console.log(
-        `Update ${green(
-            ".env.json"
-        )} with your MongoDB connection string and you're ready to develop!\n`
+        `💡 Alternatively, to deploy a stack separately, run ${green(
+            "yarn webiny stack deploy"
+        )} command.`
     );
 })();

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
-import { getPlugins } from "@webiny/plugins";
-import { useApolloClient } from "react-apollo";
+import { plugins } from "@webiny/plugins";
+import { useApolloClient } from "@apollo/react-hooks";
 import { ReactRouterOnLinkPlugin } from "../types";
 
 export type ReactRouterContextValue = {
@@ -18,11 +18,11 @@ export const RouterProvider = ({ children }) => {
     }
 
     const value = useMemo(() => {
-        const plugins = getPlugins<ReactRouterOnLinkPlugin>("react-router-on-link");
+        const onLinkPlugins = plugins.byType<ReactRouterOnLinkPlugin>("react-router-on-link");
         return {
             onLink(link) {
-                for (let i = 0; i < plugins.length; i++) {
-                    const { onLink } = plugins[i];
+                for (let i = 0; i < onLinkPlugins.length; i++) {
+                    const { onLink } = onLinkPlugins[i];
                     if (typeof onLink === "function") {
                         onLink({ link, apolloClient });
                     }

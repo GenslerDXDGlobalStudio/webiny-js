@@ -1,9 +1,9 @@
 import React from "react";
 import shortid from "shortid";
-import { get, cloneDeep, pick } from "lodash";
+import { cloneDeep, pick } from "lodash";
 import { GET_FORM, UPDATE_REVISION } from "./graphql";
 import { getFieldPosition, moveField, moveRow, deleteField } from "./functions";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 
 import {
     FbFormModelFieldsLayout,
@@ -11,7 +11,7 @@ import {
     FieldIdType,
     FieldLayoutPositionType,
     FbBuilderFieldPlugin
-} from "@webiny/app-form-builder/types";
+} from "../../../../types";
 
 export default FormEditorContext => {
     return () => {
@@ -28,8 +28,11 @@ export default FormEditorContext => {
             data: state.data,
             state,
             async getForm(id: string) {
-                const response = await self.apollo.query({ query: GET_FORM, variables: { id } });
-                const { data, error } = get(response, "data.forms.getForm");
+                const response = await self.apollo.query({
+                    query: GET_FORM,
+                    variables: { revision: decodeURIComponent(id) }
+                });
+                const { data, error } = response?.data?.formBuilder?.getForm || {};
                 if (error) {
                     throw new Error(error);
                 }
@@ -49,12 +52,12 @@ export default FormEditorContext => {
                 const response = await self.apollo.mutate({
                     mutation: UPDATE_REVISION,
                     variables: {
-                        id: data.id,
+                        revision: decodeURIComponent(data.id),
                         data: pick(data, ["layout", "fields", "name", "settings", "triggers"])
                     }
                 });
 
-                return get(response, "data.forms.updateRevision");
+                return response?.data?.formBuilder?.updateRevision;
             },
             /**
              * Set form data by providing a callback, which receives a fresh copy of data on which you can work on.
@@ -94,8 +97,9 @@ export default FormEditorContext => {
              * @returns {void|?FbFormModelField}
              */
             getFieldPlugin(query: object): FbBuilderFieldPlugin {
-                return getPlugins<FbBuilderFieldPlugin>("form-editor-field-type").find(
-                    ({ field }) => {
+                return plugins
+                    .byType<FbBuilderFieldPlugin>("form-editor-field-type")
+                    .find(({ field }) => {
                         for (const key in query) {
                             if (!(key in field)) {
                                 return null;
@@ -107,8 +111,7 @@ export default FormEditorContext => {
                         }
 
                         return true;
-                    }
-                );
+                    });
             },
 
             /**

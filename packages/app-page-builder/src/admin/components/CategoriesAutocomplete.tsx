@@ -1,16 +1,15 @@
-import * as React from "react";
+import React from "react";
 import { AutoComplete } from "@webiny/ui/AutoComplete";
 import gql from "graphql-tag";
 import { get } from "lodash";
-import { Query } from "react-apollo";
-import { useAutocomplete } from "@webiny/app/hooks/useAutocomplete";
+import { useQuery } from "@apollo/react-hooks";
 
 const GET_CATEGORY = gql`
-    query getCategory($id: ID!) {
+    query GetCategory($slug: String!) {
         pageBuilder {
-            getCategory(id: $id) {
+            getCategory(slug: $slug) {
                 data {
-                    id
+                    slug
                     name
                 }
             }
@@ -19,11 +18,11 @@ const GET_CATEGORY = gql`
 `;
 
 const LIST_CATEGORIES = gql`
-    query listCategories($search: PbSearchInput) {
+    query ListCategories {
         pageBuilder {
-            categories: listCategories(search: $search) {
+            listCategories {
                 data {
-                    id
+                    slug
                     name
                 }
             }
@@ -32,20 +31,22 @@ const LIST_CATEGORIES = gql`
 `;
 
 export function CategoriesAutocomplete(props) {
-    const autoComplete = useAutocomplete({
-        search: query => ({ query, fields: ["name"] }),
-        query: LIST_CATEGORIES
+    const listCategoriesQuery = useQuery(LIST_CATEGORIES);
+    const getCategoryQuery = useQuery(GET_CATEGORY, {
+        skip: !props.value,
+        variables: { slug: props.value }
     });
 
+    const publishedPages = get(listCategoriesQuery, "data.pageBuilder.listCategories.data", []);
+    const publishedPage = get(getCategoryQuery, "data.pageBuilder.getCategory.data");
+
     return (
-        <Query skip={!props.value} variables={{ id: props.value }} query={GET_CATEGORY}>
-            {({ data }) => (
-                <AutoComplete
-                    {...props}
-                    {...autoComplete}
-                    value={get(data, "pageBuilder.getCategory.data")}
-                />
-            )}
-        </Query>
+        <AutoComplete
+            {...props}
+            options={publishedPages}
+            valueProp={"slug"}
+            textProp={"name"}
+            value={publishedPage}
+        />
     );
 }

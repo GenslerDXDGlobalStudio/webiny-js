@@ -7,10 +7,8 @@ import globalSearch from "./globalSearch";
 import settings from "./settings";
 import routes from "./routes";
 import menus from "./menus";
-import install from "./install";
-import scopesList from "./scopesList";
-import appTemplatePlugins from "./appTemplatePlugins";
-import welcomeScreenWidget from "./welcomeScreenWidget";
+import installation from "./installation";
+import permissionRenderer from "./permissionRenderer";
 
 export default () => [
     header,
@@ -22,8 +20,6 @@ export default () => [
     settings,
     routes,
     menus,
-    scopesList,
-    install,
-    appTemplatePlugins,
-    welcomeScreenWidget
+    installation,
+    permissionRenderer
 ];

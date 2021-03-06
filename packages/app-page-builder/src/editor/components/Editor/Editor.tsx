@@ -1,52 +1,108 @@
 import React, { useEffect } from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import classSet from "classnames";
-import { ActionCreators } from "redux-undo";
 import HTML5Backend from "react-dnd-html5-backend";
+import classSet from "classnames";
+import { useEventActionHandler } from "../../hooks/useEventActionHandler";
+import { EventActionHandler, PbEditorEventActionPlugin } from "../../../types";
+import {
+    rootElementAtom,
+    PageAtomType,
+    revisionsAtom,
+    RevisionsAtomType,
+    uiAtom
+} from "../../recoil/modules";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import { DndProvider } from "react-dnd";
-import { getUi } from "@webiny/app-page-builder/editor/selectors";
-import { useKeyHandler } from "@webiny/app-page-builder/editor/hooks/useKeyHandler";
+import { useKeyHandler } from "../../hooks/useKeyHandler";
+import { plugins } from "@webiny/plugins";
 import "./Editor.scss";
-
 // Components
 import EditorBar from "./Bar";
 import EditorToolbar from "./Toolbar";
 import EditorContent from "./Content";
 import DragPreview from "./DragPreview";
 import Dialogs from "./Dialogs";
+import EditorSideBar from "./EditorSideBar";
 
-export type EditorProps = {
-    isDragging: boolean;
-    isResizing: boolean;
-    undo: Function;
-    redo: Function;
-    addKeyHandler: Function;
-    removeKeyHandler: Function;
-    slateFocused: boolean;
+type PluginRegistryType = Map<string, () => void>;
+
+const registerPlugins = (handler: EventActionHandler): PluginRegistryType => {
+    const registry = new Map();
+    const editorEventActionPlugins = plugins.byType<PbEditorEventActionPlugin>(
+        "pb-editor-event-action-plugin"
+    );
+    for (const pl of editorEventActionPlugins) {
+        if (!pl.name) {
+            throw new Error(
+                `All plugins with type "pb-editor-event-action-plugin" must have a name.`
+            );
+        }
+        registry.set(pl.name, pl.onEditorMount(handler));
+    }
+    return registry;
+};
+const unregisterPlugins = (handler: EventActionHandler, registered: PluginRegistryType): void => {
+    for (const name of registered.keys()) {
+        const cb = registered.get(name);
+        const pl = plugins.byName<PbEditorEventActionPlugin>(name);
+        if (typeof pl.onEditorUnmount === "function") {
+            pl.onEditorUnmount(handler, cb);
+            continue;
+        }
+        cb();
+    }
 };
 
-const EditorComponent = ({ isDragging, isResizing, undo, redo, slateFocused }: EditorProps) => {
+const triggerActionButtonClick = (name: string): void => {
+    const id = `#action-${name}`;
+    const element = document.querySelector<HTMLElement | null>(id);
+    if (!element) {
+        console.warn(`There is no html element "${id}"`);
+        return;
+    }
+    element.click();
+};
+
+type EditorPropsType = {
+    page: PageAtomType;
+    revisions: RevisionsAtomType;
+};
+export const Editor: React.FunctionComponent<EditorPropsType> = ({ revisions }) => {
+    const eventActionHandler = useEventActionHandler();
     const { addKeyHandler, removeKeyHandler } = useKeyHandler();
+    const { isDragging, isResizing } = useRecoilValue(uiAtom);
+
+    const setRevisionsAtomValue = useSetRecoilState(revisionsAtom);
+    const rootElementId = useRecoilValue(rootElementAtom);
+
+    const firstRender = React.useRef<boolean>(true);
+    const registeredPlugins = React.useRef<PluginRegistryType>();
 
     useEffect(() => {
         addKeyHandler("mod+z", e => {
-            if (!slateFocused) {
-                e.preventDefault();
-                undo();
-            }
+            e.preventDefault();
+            triggerActionButtonClick("undo");
         });
         addKeyHandler("mod+shift+z", e => {
-            if (!slateFocused) {
-                e.preventDefault();
-                redo();
-            }
+            e.preventDefault();
+            triggerActionButtonClick("redo");
         });
+        registeredPlugins.current = registerPlugins(eventActionHandler);
 
+        setRevisionsAtomValue(revisions);
         return () => {
             removeKeyHandler("mod+z");
             removeKeyHandler("mod+shift+z");
+
+            unregisterPlugins(eventActionHandler, registeredPlugins.current);
         };
-    });
+    }, []);
+
+    useEffect(() => {
+        if (!rootElementId || firstRender.current === true) {
+            firstRender.current = false;
+            return;
+        }
+    }, [rootElementId]);
 
     const classes = {
         "pb-editor": true,
@@ -59,25 +115,10 @@ const EditorComponent = ({ isDragging, isResizing, undo, redo, slateFocused }: E
                 <EditorBar />
                 <EditorToolbar />
                 <EditorContent />
+                <EditorSideBar />
                 <Dialogs />
                 <DragPreview />
             </div>
         </DndProvider>
     );
 };
-
-export const Editor = connect<any, any, any>(
-    state => {
-        const ui = getUi(state);
-
-        return {
-            slateFocused: ui.slateFocused,
-            isDragging: ui.dragging,
-            isResizing: ui.resizing
-        };
-    },
-    {
-        undo: ActionCreators.undo,
-        redo: ActionCreators.redo
-    }
-)(EditorComponent);

@@ -1,22 +1,29 @@
 import React from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { getPage } from "@webiny/app-page-builder/editor/selectors";
-import { omit, isEqual } from "lodash";
+import gql from "graphql-tag";
+import { pageAtom } from "../../../recoil/modules";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
 import { useRouter } from "@webiny/react-router";
 import { MenuItem } from "@webiny/ui/Menu";
 import { ListItemGraphic } from "@webiny/ui/List";
 import { Icon } from "@webiny/ui/Icon";
-import { ReactComponent as HomeIcon } from "@webiny/app-page-builder/admin/assets/round-home-24px.svg";
-import { Mutation } from "react-apollo";
-import gql from "graphql-tag";
+import { ReactComponent as HomeIcon } from "../../../../admin/assets/round-home-24px.svg";
+import { useMutation } from "@apollo/react-hooks";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
+import { useRecoilValue } from "recoil";
+import { usePageBuilderSettings } from "../../../../admin/hooks/usePageBuilderSettings";
 
-const setHomePage = gql`
-    mutation SetHomePage($id: ID!) {
+const PUBLISH_PAGE = gql`
+    mutation PbPublishPage($id: ID!) {
         pageBuilder {
-            setHomePage(id: $id) {
+            publishPage(id: $id) {
+                data {
+                    id
+                    path
+                    status
+                    locked
+                }
                 error {
+                    code
                     message
                 }
             }
@@ -24,9 +31,13 @@ const setHomePage = gql`
     }
 `;
 
-const SetAsHomepageButton = ({ page }) => {
+const SetAsHomepageButton: React.FunctionComponent = () => {
+    const page = useRecoilValue(pageAtom);
     const { history } = useRouter();
     const { showSnackbar } = useSnackbar();
+    const publishPageMutation = useMutation(PUBLISH_PAGE);
+
+    const { settings, updateSettingsMutation, isSpecialPage } = usePageBuilderSettings();
 
     return (
         <ConfirmationDialog
@@ -38,47 +49,47 @@ const SetAsHomepageButton = ({ page }) => {
             }
         >
             {({ showConfirmation }) => (
-                <Mutation mutation={setHomePage}>
-                    {update => (
-                        <MenuItem
-                            onClick={() => {
-                                showConfirmation(async () => {
-                                    const response = await update({
-                                        variables: {
-                                            id: page.id
+                <MenuItem
+                    disabled={isSpecialPage(page, "home")}
+                    onClick={() => {
+                        showConfirmation(async () => {
+                            const [publish] = publishPageMutation;
+                            await publish({
+                                variables: { id: page.id }
+                            });
+
+                            const [updateSettings] = updateSettingsMutation;
+                            const response = await updateSettings({
+                                variables: {
+                                    data: {
+                                        pages: {
+                                            ...settings.pages,
+                                            home: page.id
                                         }
-                                    });
-
-                                    const { error } = response.data.pageBuilder.setHomePage;
-                                    if (error) {
-                                        return showSnackbar(error.message);
                                     }
+                                }
+                            });
 
-                                    history.push(`/page-builder/pages?id=${page.id}`);
+                            const { error } = response.data.pageBuilder.updateSettings;
+                            if (error) {
+                                return showSnackbar(error.message);
+                            }
 
-                                    // Let's wait a bit, because we are also redirecting the user.
-                                    setTimeout(
-                                        () => showSnackbar("New homepage set successfully!"),
-                                        500
-                                    );
-                                });
-                            }}
-                        >
-                            <ListItemGraphic>
-                                <Icon icon={<HomeIcon />} />
-                            </ListItemGraphic>
-                            Set as homepage
-                        </MenuItem>
-                    )}
-                </Mutation>
+                            history.push(`/page-builder/pages?id=${page.id}`);
+
+                            // Let's wait a bit, because we are also redirecting the user.
+                            setTimeout(() => showSnackbar("New homepage set successfully!"), 500);
+                        });
+                    }}
+                >
+                    <ListItemGraphic>
+                        <Icon icon={<HomeIcon />} />
+                    </ListItemGraphic>
+                    Set as homepage
+                </MenuItem>
             )}
         </ConfirmationDialog>
     );
 };
 
-export default connect<any, any, any>(
-    state => ({ page: omit(getPage(state), ["content"]) }),
-    null,
-    null,
-    { areStatePropsEqual: isEqual }
-)(SetAsHomepageButton);
+export default React.memo(SetAsHomepageButton);

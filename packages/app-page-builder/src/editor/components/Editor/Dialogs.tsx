@@ -1,10 +1,7 @@
 import React from "react";
 import styled from "@emotion/styled";
-import { getPlugins } from "@webiny/plugins";
-import {
-    PbEditorToolbarBottomPlugin,
-    PbEditorToolbarTopPlugin
-} from "@webiny/app-page-builder/types";
+import { plugins } from "@webiny/plugins";
+import { PbEditorToolbarBottomPlugin, PbEditorToolbarTopPlugin } from "../../../types";
 
 const DialogsContainer = styled("div")({
     position: "fixed",
@@ -13,17 +10,15 @@ const DialogsContainer = styled("div")({
 
 const Dialogs = () => {
     const actions = [
-        ...getPlugins<PbEditorToolbarTopPlugin>("pb-editor-toolbar-top"),
-        ...getPlugins<PbEditorToolbarBottomPlugin>("pb-editor-toolbar-bottom")
+        ...plugins.byType<PbEditorToolbarTopPlugin>("pb-editor-toolbar-top"),
+        ...plugins.byType<PbEditorToolbarBottomPlugin>("pb-editor-toolbar-bottom")
     ];
 
     return (
         <DialogsContainer data-type={"dialogs"}>
-            {actions.map(plugin =>
-                typeof plugin.renderDialog === "function"
-                    ? React.cloneElement(plugin.renderDialog(), { key: plugin.name })
-                    : null
-            )}
+            {actions
+                .filter(plugin => typeof plugin.renderDialog === "function")
+                .map(plugin => React.cloneElement(plugin.renderDialog(), { key: plugin.name }))}
         </DialogsContainer>
     );
 };

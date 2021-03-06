@@ -2,17 +2,31 @@ import gql from "graphql-tag";
 
 export const LIST_FORMS = gql`
     query FormsListForms {
-        forms {
-            listForms(limit: 50) {
+        formBuilder {
+            listForms {
                 data {
-                    parent
+                    id
                     name
-                    publishedRevisions {
-                        id
-                        name
-                        version
-                        published
-                    }
+                }
+            }
+        }
+    }
+`;
+
+export const GET_FORM_REVISIONS = gql`
+    query FormsGetFormRevisions($id: ID!) {
+        formBuilder {
+            getFormRevisions(id: $id) {
+                data {
+                    id
+                    name
+                    published
+                    version
+                }
+                error {
+                    code
+                    message
+                    data
                 }
             }
         }

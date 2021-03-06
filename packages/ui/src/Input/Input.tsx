@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TextField, TextFieldProps } from "@rmwc/textfield";
-import { FormElementMessage } from "@webiny/ui/FormElementMessage";
+import { FormElementMessage } from "../FormElementMessage";
 import pick from "lodash/pick";
 import { FormComponentProps } from "./../types";
 import { ReactElement } from "react";
@@ -26,9 +26,6 @@ export type InputProps = FormComponentProps &
         rows?: number;
 
         maxLength?: number;
-
-        // A trailing icon. Use `<InputIcon/>` component.
-        leadingIcon?: React.ReactNode;
 
         // A callback that is executed when input focus is lost.
         onBlur?: (e: React.SyntheticEvent<HTMLInputElement>) => any;
@@ -59,6 +56,7 @@ export class Input extends React.Component<InputProps> {
         "type",
         "step",
         "disabled",
+        "readOnly",
         "placeholder",
         "outlined",
         "onKeyDown",

@@ -1,14 +1,9 @@
 import { get, set } from "lodash";
-import { FbFormRenderComponentProps } from "@webiny/app-form-builder/types";
+import { FbFormRenderComponentProps } from "../../../types";
 import { SAVE_FORM_VIEW } from "./graphql";
 import { ApolloClient } from "apollo-client";
 
-// TODO: `client` is not part of FbFormRenderComponentProps but is injected by `FormRender`
-
-const saveFormView = ({
-    data,
-    client
-}: FbFormRenderComponentProps & { client: ApolloClient<any> }) => {
+const saveFormView = ({ data, client }: FbFormRenderComponentProps) => {
     // SSR?
     if (!window || !data) {
         return;
@@ -22,7 +17,7 @@ const saveFormView = ({
     client.mutate({
         mutation: SAVE_FORM_VIEW,
         variables: {
-            id: data.id
+            revision: data.id
         }
     });
 };

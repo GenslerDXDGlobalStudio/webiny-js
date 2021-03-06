@@ -1,4 +1,4 @@
-import { CmsFieldTypePlugins, CmsContext, CmsContentModel } from "@webiny/api-headless-cms/types";
+import { CmsFieldTypePlugins, CmsContentModel } from "../../../types";
 import { createManageTypeName, createTypeName } from "../utils/createTypeName";
 import { renderInputFields } from "../utils/renderInputFields";
 import { renderSortEnum } from "../utils/renderSortEnum";
@@ -7,12 +7,8 @@ import { renderListFilterFields } from "../utils/renderListFilterFields";
 import { renderGetFilterFields } from "../utils/renderGetFilterFields";
 import { pluralizedTypeName } from "../utils/pluralizedTypeName";
 
-export interface CreateManageSDL {
-    (params: {
-        model: CmsContentModel;
-        context: CmsContext;
-        fieldTypePlugins: CmsFieldTypePlugins;
-    }): string;
+interface CreateManageSDL {
+    (params: { model: CmsContentModel; fieldTypePlugins: CmsFieldTypePlugins }): string;
 }
 
 export const createManageSDL: CreateManageSDL = ({ model, fieldTypePlugins }): string => {
@@ -39,24 +35,24 @@ export const createManageSDL: CreateManageSDL = ({ model, fieldTypePlugins }): s
         type ${mTypeName} {
             id: ID
             createdOn: DateTime
-            updatedOn: DateTime
+            createdBy: CmsCreatedBy
             savedOn: DateTime
             meta: ${mTypeName}Meta
             ${fields.map(f => f.fields).join("\n")}
         }
 
         type ${mTypeName}Meta {
-            model: String
-            environment: ID
-            parent: ID
+            modelId: String
             version: Int
-            latestVersion: Boolean
             locked: Boolean
-            published: Boolean
             publishedOn: DateTime
             status: String
+            """
+            CAUTION: this field is resolved by making an extra query to DB. 
+            RECOMMENDATION: Use it only with "get" queries (avoid in "list") 
+            """
             revisions: [${mTypeName}]
-            title: CmsText
+            title: String
         }
 
         ${inputFieldsRender &&
@@ -75,18 +71,13 @@ export const createManageSDL: CreateManageSDL = ({ model, fieldTypePlugins }): s
             ${listFilterFieldsRender}
         }`}
 
-        ${getFilterFieldsRender &&
-            `input ${mTypeName}UpdateWhereInput {
-            ${getFilterFieldsRender}
-        }`}
-
-              ${getFilterFieldsRender &&
-                  `input ${mTypeName}DeleteWhereInput {
-            ${getFilterFieldsRender}
-        }`}
-
         type ${mTypeName}Response {
             data: ${mTypeName}
+            error: CmsError
+        }
+        
+        type ${mTypeName}ArrayResponse {
+            data: [${mTypeName}]
             error: CmsError
         }
 
@@ -102,14 +93,17 @@ export const createManageSDL: CreateManageSDL = ({ model, fieldTypePlugins }): s
         }`}
 
         extend type Query {
-            get${typeName}(where: ${mTypeName}GetWhereInput!): ${mTypeName}Response
+            get${typeName}(revision: ID!): ${mTypeName}Response
+            
+            get${typeName}Revisions(id: ID!): ${mTypeName}ArrayResponse
+            
+            get${pluralizedTypeName(typeName)}ByIds(revisions: [ID!]!): ${mTypeName}ArrayResponse
 
             list${pluralizedTypeName(typeName)}(
                 where: ${mTypeName}ListWhereInput
                 sort: [${mTypeName}ListSorter]
                 limit: Int
                 after: String
-                before: String
             ): ${mTypeName}ListResponse
         }
 
@@ -118,13 +112,17 @@ export const createManageSDL: CreateManageSDL = ({ model, fieldTypePlugins }): s
 
             create${typeName}From(revision: ID!, data: ${mTypeName}Input): ${mTypeName}Response
 
-            update${typeName}(where: ${mTypeName}UpdateWhereInput!, data: ${mTypeName}Input!): ${mTypeName}Response
+            update${typeName}(revision: ID!, data: ${mTypeName}Input!): ${mTypeName}Response
 
-            delete${typeName}(where: ${mTypeName}DeleteWhereInput!): CmsDeleteResponse
+            delete${typeName}(revision: ID!): CmsDeleteResponse
 
             publish${typeName}(revision: ID!): ${mTypeName}Response
 
             unpublish${typeName}(revision: ID!): ${mTypeName}Response
+            
+            request${typeName}Review(revision: ID!): ${mTypeName}Response
+            
+            request${typeName}Changes(revision: ID!): ${mTypeName}Response
         }
     `;
 };

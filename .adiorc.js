@@ -1,25 +1,14 @@
 const get = require("lodash.get");
-const LOAD_COMPONENTS_PREFIX = ["@webiny/", "@serverless/"];
+const getWorkspaces = require("get-yarn-workspaces");
+const path = require("path");
 
 module.exports = {
     parser: {
         plugins: ["jsx", "classProperties", "dynamicImport", "throwExpressions", "typescript"]
     },
     traverse: ({ path, push }) => {
-        // We try to detect "this.load("...")" calls inside of Serverless components.
         const { node } = path;
         if (node.type === "CallExpression") {
-            if (get(node, "callee.property.name") === "load") {
-                const possiblePackage = get(node, "arguments.0.value");
-                if (typeof possiblePackage === "string") {
-                    LOAD_COMPONENTS_PREFIX.forEach(prefix => {
-                        if (possiblePackage.startsWith(prefix)) {
-                            return push(possiblePackage);
-                        }
-                    });
-                }
-            }
-
             if (
                 get(node, "callee.property.name") === "resolve" &&
                 get(node, "callee.object.name") === "require"
@@ -32,21 +21,29 @@ module.exports = {
         }
     },
     ignore: {
-        src: ["path", "os", "fs", "util", "events", "crypto", "aws-sdk"],
-        dependencies: ["@babel/runtime"],
-        devDependencies: true
+        src: ["path", "os", "fs", "util", "events", "crypto", "aws-sdk", "url"],
+        dependencies: [
+            "@babel/runtime",
+            // Packages below are defined as peerDependencies in many 3rd party packages
+            // and make yarn go crazy with warnings. We define these packages as "dependencies"
+            // in our own packages, but we don't directly use them:
+            "@emotion/core",
+            "@svgr/webpack",
+            "@types/react",
+            "@webiny/cli",
+            "prop-types",
+            "apollo-cache",
+            "apollo-client",
+            "apollo-link",
+            "apollo-utilities",
+            "graphql",
+            "react-dom"
+        ],
+        devDependencies: true,
+        peerDependencies: true
     },
     ignoreDirs: ["node_modules/", "dist/", "build/"],
-    packages: [
-        "packages/*",
-        "api/apolloGateway",
-        "api/settingsManager",
-        "api/databaseProxy",
-        "api/files/*",
-        "api/formBuilder",
-        "api/cms/*",
-        "api/i18n/*",
-        "api/pageBuilder",
-        "api/security/*"
-    ]
+    packages: getWorkspaces().map(pkg =>
+        pkg.replace(/\//g, path.sep).replace(process.cwd() + path.sep, "")
+    )
 };

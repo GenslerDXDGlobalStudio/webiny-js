@@ -1,11 +1,12 @@
 import React from "react";
 import ImagesList from "./ImagesList";
 import Mosaic from "./components/Mosaic";
-import { PbRenderElementPlugin } from "@webiny/app-page-builder/types";
-import { PbPageElementImagesListComponentPlugin } from "@webiny/app-page-builder/types";
+import { PbRenderElementPlugin } from "../../../../types";
+import { PbPageElementImagesListComponentPlugin } from "../../../../types";
+import { PluginCollection } from "@webiny/plugins/types";
 // import Slider from "./components/Slider";
 
-const plugins = [
+export default (): PluginCollection => [
     {
         name: "pb-render-page-element-images-list",
         type: "pb-render-page-element",
@@ -29,5 +30,3 @@ const plugins = [
         component: Slider
     }*/
 ];
-
-export default plugins;

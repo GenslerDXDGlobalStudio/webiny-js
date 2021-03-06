@@ -1,6 +1,6 @@
-import { PbPageSettingsFieldsPlugin } from "@webiny/app-page-builder/types";
+import { PbPageSettingsFieldsPlugin } from "../../../types";
 
-export default [
+export default (): PbPageSettingsFieldsPlugin[] => [
     {
         name: "pb-page-settings-fields-general",
         type: "pb-page-settings-fields",
@@ -11,6 +11,7 @@ export default [
                 }
                 tags
                 layout
+                snippet
             }
     `
     },
@@ -45,4 +46,4 @@ export default [
             }
     `
     }
-] as PbPageSettingsFieldsPlugin[];
+];

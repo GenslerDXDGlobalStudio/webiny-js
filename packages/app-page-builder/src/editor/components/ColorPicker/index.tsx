@@ -5,8 +5,8 @@ import { css } from "emotion";
 import { isEqual } from "lodash";
 import { ChromePicker } from "react-color";
 import { Menu } from "@webiny/ui/Menu";
-import { usePageBuilder } from "@webiny/app-page-builder/hooks/usePageBuilder";
-import { ReactComponent as IconPalette } from "@webiny/app-page-builder/editor/assets/icons/round-color_lens-24px.svg";
+import { usePageBuilder } from "../../../hooks/usePageBuilder";
+import { ReactComponent as IconPalette } from "../../assets/icons/round-color_lens-24px.svg";
 
 const ColorPickerStyle = styled("div")({
     display: "flex",
@@ -109,7 +109,21 @@ const styles = {
     })
 };
 
-const ColorPicker = ({ value, onChange, onChangeComplete, compact = false }) => {
+type ColorPickerProps = {
+    value: string;
+    onChange: Function;
+    onChangeComplete: Function;
+    compact?: boolean;
+    handlerClassName?: string;
+};
+
+const ColorPicker = ({
+    value,
+    onChange,
+    onChangeComplete,
+    compact = false,
+    handlerClassName
+}: ColorPickerProps) => {
     const [showPicker, setShowPicker] = useState(false);
 
     const getColorValue = useCallback(rgb => {
@@ -205,7 +219,7 @@ const ColorPicker = ({ value, onChange, onChangeComplete, compact = false }) => 
             <CompactColorPicker>
                 <Menu
                     handle={
-                        <div className={styles.swatch}>
+                        <div className={classnames(styles.swatch, handlerClassName)}>
                             <div className={styles.color} style={{ backgroundColor: value }} />
                         </div>
                     }

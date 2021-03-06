@@ -1,6 +1,6 @@
 {
   "name": "@webiny/cli",
-  "version": "4.14.0",
+  "version": "5.0.0-beta.4",
   "main": "index.js",
   "bin": {
     "webiny": "./bin.js"
@@ -13,21 +13,19 @@
   "author": "Pavel Denisjuk <pavel@webiny.com>",
   "description": "A tool to bootstrap a Webiny project.",
   "dependencies": {
-    "@webiny/plugins": "^4.14.0",
-    "@webiny/tracking": "^4.14.0",
-    "camelcase": "^5.3.1",
-    "chalk": "^2.4.2",
-    "debug": "^4.1.1",
-    "env-cmd": "^9.0.3",
-    "execa": "^2.0.5",
-    "find-up": "^4.1.0",
-    "fs-extra": "^9.0.0",
-    "indent-string": "^4.0.0",
-    "load-json-file": "^6.2.0",
-    "public-ip": "^4.0.2",
-    "semver": "^7.3.2",
-    "write-json-file": "^4.2.0",
-    "yargs": "^14.0.0"
+    "@webiny/plugins": "^5.0.0-beta.4",
+    "@webiny/tracking": "^5.0.0-beta.4",
+    "camelcase": "5.3.1",
+    "chalk": "2.4.2",
+    "dotenv": "8.2.0",
+    "execa": "2.1.0",
+    "find-up": "4.1.0",
+    "fs-extra": "9.0.1",
+    "load-json-file": "6.2.0",
+    "public-ip": "4.0.3",
+    "semver": "7.3.4",
+    "write-json-file": "4.3.0",
+    "yargs": "14.2.3"
   },
   "license": "MIT",
   "publishConfig": {
@@ -42,5 +40,5 @@
       "/dist/"
     ]
   },
-  "gitHead": "2cd812f1b150c10df088a5b2f75a62c9e376c1a4"
+  "gitHead": "b8aec8a1be3f25c3b428b357fe1e352c7cbff9ae"
 }

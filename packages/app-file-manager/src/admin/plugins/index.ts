@@ -1,4 +1,5 @@
+import installation from "./installation";
 import menus from "./menus";
-import scopesList from "./scopesList";
+import permissionRenderer from "./permissionRenderer";
 
-export default [menus, scopesList];
+export default () => [installation, menus, permissionRenderer];

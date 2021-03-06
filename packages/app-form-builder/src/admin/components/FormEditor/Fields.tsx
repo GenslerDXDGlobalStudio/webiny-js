@@ -1,13 +1,13 @@
 import React from "react";
-import { useFormEditor } from "@webiny/app-form-builder/admin/components/FormEditor/Context";
-import { getPlugins } from "@webiny/plugins";
+import { useFormEditor } from "./Context";
+import { plugins } from "@webiny/plugins";
 import styled from "@emotion/styled";
 import { css } from "emotion";
 import { Icon } from "@webiny/ui/Icon";
 import { Accordion, AccordionItem } from "@webiny/ui/Accordion";
 import { ReactComponent as HandleIcon } from "./icons/round-drag_indicator-24px.svg";
 import Draggable from "./Draggable";
-import { FbBuilderFieldPlugin, FbEditorFieldGroup } from "@webiny/app-form-builder/types";
+import { FbBuilderFieldPlugin, FbEditorFieldGroup } from "../../../types";
 
 const FieldContainer = styled("div")({
     padding: "10px 15px",
@@ -87,7 +87,8 @@ export const Fields = ({ onFieldDragStart }) => {
     const { getField } = useFormEditor();
 
     function getGroups() {
-        const presetFieldPlugins = getPlugins<FbBuilderFieldPlugin>("form-editor-field-type")
+        const presetFieldPlugins = plugins
+            .byType<FbBuilderFieldPlugin>("form-editor-field-type")
             .filter(pl => pl.field.group)
             .filter(pl => {
                 if (pl.field.unique) {
@@ -96,7 +97,7 @@ export const Fields = ({ onFieldDragStart }) => {
                 return true;
             });
 
-        return getPlugins<FbEditorFieldGroup>("form-editor-field-group").map(pl => ({
+        return plugins.byType<FbEditorFieldGroup>("form-editor-field-group").map(pl => ({
             ...pl.group,
             name: pl.name,
             fields: presetFieldPlugins.filter(f => f.field.group === pl.name).map(pl => pl.field)

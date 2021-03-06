@@ -1,0 +1,23 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/**",
+    "./dist",
+    "../app",
+    "../app-i18n",
+    "../app-admin",
+    "../form",
+    "../ui",
+    "../app-security"
+  ],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
+  },
+  "references": []
+}

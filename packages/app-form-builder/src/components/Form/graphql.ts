@@ -4,34 +4,23 @@ export const FIELDS_FIELDS = `
         _id
         fieldId
         type
-        label {
-            value
-        }
-        placeholderText {
-            value
-        }
-        helpText {
-            value
-        }
+        label
+        placeholderText
+        helpText
         options {
-            label {
-                value
-            }
+            label
             value
         }
         validation {
             name
             settings
-            message {
-                value
-            }
+            message
         }
         settings
 `;
 
 export const DATA_FIELDS = `
     id
-    parent
     fields {
         ${FIELDS_FIELDS}
     }
@@ -40,9 +29,7 @@ export const DATA_FIELDS = `
     settings {
         reCaptcha {
             enabled
-            errorMessage {
-                value
-            }
+            errorMessage
             settings {
                 enabled
                 siteKey
@@ -52,28 +39,20 @@ export const DATA_FIELDS = `
         layout {
             renderer
         }
-        successMessage {
-            value
-        }
-        submitButtonLabel {
-            value
-        } 
+        successMessage
+        submitButtonLabel 
         termsOfServiceMessage {
             enabled
-            message {
-                value
-            }
-            errorMessage {
-                value
-            }
+            message
+            errorMessage
         }
     }
 `;
 
 export const GET_PUBLISHED_FORM = gql`
-    query GetPublishedForm($id: ID, $parent: ID, $version: Int, $slug: String) {
-        forms {
-            getPublishedForm(id: $id, parent: $parent, version: $version, slug: $slug) {
+    query GetPublishedForm($revision: ID, $parent: ID) {
+        formBuilder {
+            getPublishedForm(revision: $revision, parent: $parent) {
                 data {
                     ${DATA_FIELDS}
                 }

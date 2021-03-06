@@ -14,23 +14,26 @@ import { Icon } from "@webiny/ui/Icon";
 import { MenuItem, Menu, MenuDivider } from "@webiny/ui/Menu";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
 import { Tooltip } from "@webiny/ui/Tooltip";
-import { ReactComponent as MoreVerticalIcon } from "@webiny/app-page-builder/admin/assets/more_vert.svg";
-import { ReactComponent as LockIcon } from "@webiny/app-page-builder/admin/assets/lock.svg";
-import { ReactComponent as BeenHereIcon } from "@webiny/app-page-builder/admin/assets/beenhere.svg";
-import { ReactComponent as GestureIcon } from "@webiny/app-page-builder/admin/assets/gesture.svg";
+import { ReactComponent as MoreVerticalIcon } from "../../../assets/more_vert.svg";
+import { ReactComponent as LockIcon } from "../../../assets/lock.svg";
+import { ReactComponent as BeenHereIcon } from "../../../assets/beenhere.svg";
+import { ReactComponent as GestureIcon } from "../../../assets/gesture.svg";
 import { useRevisionHandlers } from "./useRevisionHandlers";
-import { useConfigureDomainDialog } from "@webiny/app-page-builder/admin/hooks/useConfigureDomain";
-import { usePageBuilderSettings } from "@webiny/app-page-builder/admin/hooks/usePageBuilderSettings";
-import { useSiteStatus } from "@webiny/app-page-builder/admin/hooks/useSiteStatus";
-import { ReactComponent as AddIcon } from "@webiny/app-page-builder/admin/assets/add.svg";
-import { ReactComponent as EditIcon } from "@webiny/app-page-builder/admin/assets/edit.svg";
-import { ReactComponent as PublishIcon } from "@webiny/app-page-builder/admin/assets/round-publish-24px.svg";
-import { ReactComponent as DeleteIcon } from "@webiny/app-page-builder/admin/assets/delete.svg";
-import { ReactComponent as PreviewIcon } from "@webiny/app-page-builder/admin/assets/visibility.svg";
-import { PbPageRevision } from "@webiny/app-page-builder/types";
+import { useConfigureWebsiteUrlDialog } from "../../../hooks/useConfigureWebsiteUrl";
+import { usePageBuilderSettings } from "../../../hooks/usePageBuilderSettings";
+import { useSiteStatus } from "../../../hooks/useSiteStatus";
+import { ReactComponent as AddIcon } from "../../../assets/add.svg";
+import { ReactComponent as EditIcon } from "../../../assets/edit.svg";
+import { ReactComponent as PublishIcon } from "../../../assets/round-publish-24px.svg";
+import { ReactComponent as UnpublishIcon } from "../../../assets/unpublish.svg";
+import { ReactComponent as DeleteIcon } from "../../../assets/delete.svg";
+import { ReactComponent as PreviewIcon } from "../../../assets/visibility.svg";
+import { PbPageData, PbPageRevision } from "../../../../types";
+import usePermission from "../../../../hooks/usePermission";
 
 type RevisionProps = {
-    rev: PbPageRevision;
+    revision: PbPageRevision;
+    page: PbPageData;
 };
 
 const primaryColor = css({ color: "var(--mdc-theme-primary)" });
@@ -42,13 +45,14 @@ const revisionsMenu = css({
 });
 
 const getIcon = (rev: PbPageRevision) => {
+    const published = rev.status === "published";
     switch (true) {
-        case rev.locked && !rev.published:
+        case rev.locked && !published:
             return {
                 icon: <Icon icon={<LockIcon />} />,
                 text: "This revision is locked (it has already been published)"
             };
-        case rev.published:
+        case published:
             return {
                 icon: <Icon icon={<BeenHereIcon />} className={primaryColor} />,
                 text: "This revision is currently published!"
@@ -65,16 +69,28 @@ const Div = ({ children }) => {
     return <div>{children}</div>;
 };
 
-const Revision = ({ rev }: RevisionProps) => {
-    const { icon, text: tooltipText } = getIcon(rev);
-    const { getDomain, getPagePreviewUrl } = usePageBuilderSettings();
-    const [isSiteRunning, refreshSiteStatus] = useSiteStatus(getDomain());
+const Revision = ({ revision, page }: RevisionProps) => {
+    const { icon, text: tooltipText } = getIcon(revision);
+    const { getWebsiteUrl, getPageUrl } = usePageBuilderSettings();
+    const [isSiteRunning, refreshSiteStatus] = useSiteStatus(getWebsiteUrl());
 
-    const { deleteRevision, createRevision, publishRevision, editRevision } = useRevisionHandlers({
-        rev
+    const {
+        deleteRevision,
+        createRevision,
+        publishRevision,
+        unpublishRevision,
+        editRevision
+    } = useRevisionHandlers({
+        revision,
+        page
     });
 
-    const { showConfigureDomainDialog } = useConfigureDomainDialog(getDomain(), refreshSiteStatus);
+    const { showConfigureWebsiteUrlDialog } = useConfigureWebsiteUrlDialog(
+        getWebsiteUrl(),
+        refreshSiteStatus
+    );
+
+    const { canPublish, canUnpublish, canDelete } = usePermission();
 
     return (
         <ConfirmationDialog
@@ -89,17 +105,16 @@ const Revision = ({ rev }: RevisionProps) => {
                         </Tooltip>
                     </ListItemGraphic>
                     <ListItemText>
-                        <ListItemTextPrimary>{rev.title}</ListItemTextPrimary>
+                        <ListItemTextPrimary>{revision.title}</ListItemTextPrimary>
                         <ListItemTextSecondary>
-                            Last modified <TimeAgo datetime={rev.savedOn} /> (#
-                            {rev.version})
+                            Last modified <TimeAgo datetime={revision.savedOn} />
+                            (#{revision.version})
                         </ListItemTextSecondary>
                     </ListItemText>
                     <ListItemMeta>
                         <Menu
                             handle={<IconButton icon={<MoreVerticalIcon />} />}
                             className={revisionsMenu}
-                            /*openSide={"left"} TODO: @adrian */
                         >
                             <MenuItem onClick={createRevision}>
                                 <ListItemGraphic>
@@ -107,7 +122,7 @@ const Revision = ({ rev }: RevisionProps) => {
                                 </ListItemGraphic>
                                 New from current
                             </MenuItem>
-                            {!rev.locked && (
+                            {!revision.locked && (
                                 <MenuItem onClick={editRevision}>
                                     <ListItemGraphic>
                                         <Icon icon={<EditIcon />} />
@@ -116,8 +131,8 @@ const Revision = ({ rev }: RevisionProps) => {
                                 </MenuItem>
                             )}
 
-                            {!rev.published && (
-                                <MenuItem onClick={() => publishRevision(rev)}>
+                            {revision.status !== "published" && canPublish() && (
+                                <MenuItem onClick={() => publishRevision(revision)}>
                                     <ListItemGraphic>
                                         <Icon icon={<PublishIcon />} />
                                     </ListItemGraphic>
@@ -125,12 +140,28 @@ const Revision = ({ rev }: RevisionProps) => {
                                 </MenuItem>
                             )}
 
+                            {revision.status === "published" && canUnpublish() && (
+                                <MenuItem onClick={() => unpublishRevision(revision)}>
+                                    <ListItemGraphic>
+                                        <Icon icon={<UnpublishIcon />} />
+                                    </ListItemGraphic>
+                                    Unpublish
+                                </MenuItem>
+                            )}
+
                             <MenuItem
                                 onClick={() => {
                                     if (isSiteRunning) {
-                                        window.open(getPagePreviewUrl(rev), "_blank", "noopener");
+                                        window.open(
+                                            getPageUrl({
+                                                ...revision,
+                                                path: page.path
+                                            }),
+                                            "_blank",
+                                            "noopener"
+                                        );
                                     } else {
-                                        showConfigureDomainDialog();
+                                        showConfigureWebsiteUrlDialog();
                                     }
                                 }}
                             >
@@ -140,7 +171,7 @@ const Revision = ({ rev }: RevisionProps) => {
                                 Preview
                             </MenuItem>
 
-                            {!rev.locked && rev.id !== rev.parent && (
+                            {canDelete(page) && !revision.locked && (
                                 <Div>
                                     <MenuDivider />
                                     <MenuItem onClick={() => showConfirmation(deleteRevision)}>

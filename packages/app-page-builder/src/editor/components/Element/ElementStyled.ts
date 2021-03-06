@@ -1,5 +1,6 @@
+// TODO remove
 // @ts-nocheck
-import * as React from "react";
+import React from "react";
 import styled from "@emotion/styled";
 import { css } from "emotion";
 
@@ -42,7 +43,8 @@ export const typeStyle = css({
 
 type ElementContainerProps = {
     id: string;
-    onMouseOver: any;
+    onMouseOver: (ev: any) => void;
+    onMouseOut: (ev: any) => void;
     highlight: boolean;
     active: boolean;
     children: React.ReactNode;
@@ -109,7 +111,6 @@ export const ElementContainer = React.memo<ElementContainerProps>(
                     pointerEvents: highlight ? "auto" : "none",
                     display: !active ? "block" : "none",
                     position: "absolute",
-                    backgroundColor: active ? "rgba(250, 87, 35, 1)" : "rgba(0, 204, 176, 0.1)",
                     width: "100%",
                     height: "100%",
                     cursor: "pointer",

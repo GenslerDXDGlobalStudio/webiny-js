@@ -1,21 +1,20 @@
 import React, { useMemo } from "react";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { Switch } from "@webiny/ui/Switch";
 import {
     SimpleForm,
     SimpleFormContent,
     SimpleFormHeader
 } from "@webiny/app-admin/components/SimpleForm";
-import { useFormEditor } from "@webiny/app-form-builder/admin/components/FormEditor/Context";
+import { useFormEditor } from "../../../Context";
 import { Form } from "@webiny/form";
 import { cloneDeep, debounce } from "lodash";
 import { Grid, Cell } from "@webiny/ui/Grid";
-import { I18NInput } from "@webiny/app-i18n/admin/components";
-import { useI18N } from "@webiny/app-i18n/hooks/useI18N";
+import { Input } from "@webiny/ui/Input";
 import { validation } from "@webiny/validation";
-import { FbBuilderFormFieldValidatorPlugin } from "@webiny/app-form-builder/types";
+import { FbBuilderFormFieldValidatorPlugin } from "../../../../../../types";
 
-const onEnabledChange = ({ i18n, data, validationValue, onChangeValidation, validator }) => {
+const onEnabledChange = ({ data, validationValue, onChangeValidation, validator }) => {
     if (data) {
         const index = validationValue.findIndex(item => item.name === validator.name);
         onChangeValidation([
@@ -28,14 +27,7 @@ const onEnabledChange = ({ i18n, data, validationValue, onChangeValidation, vali
             {
                 name: validator.name,
                 settings: validator.defaultSettings,
-                message: {
-                    values: [
-                        {
-                            locale: i18n.getDefaultLocale().id,
-                            value: validator.defaultMessage
-                        }
-                    ]
-                }
+                message: validator.defaultMessage
             }
         ]);
     }
@@ -51,7 +43,6 @@ const onFormChange = debounce(({ data, validationValue, onChangeValidation, vali
 }, 200);
 
 const ValidatorsTab = props => {
-    const i18n = useI18N();
     const { getFieldPlugin } = useFormEditor();
     const {
         field,
@@ -61,7 +52,8 @@ const ValidatorsTab = props => {
     const fieldPlugin = getFieldPlugin({ name: field.name });
 
     const validators = useMemo(() => {
-        return getPlugins<FbBuilderFormFieldValidatorPlugin>("form-editor-field-validator")
+        return plugins
+            .byType<FbBuilderFormFieldValidatorPlugin>("form-editor-field-validator")
             .map(plugin => plugin.validator)
             .map(validator => {
                 if (fieldPlugin.field.validators.includes(validator.name)) {
@@ -104,7 +96,6 @@ const ValidatorsTab = props => {
                                         value={validatorIndex >= 0}
                                         onChange={() =>
                                             onEnabledChange({
-                                                i18n,
                                                 data,
                                                 validationValue,
                                                 onChangeValidation,
@@ -135,7 +126,7 @@ const ValidatorsTab = props => {
                                                         name={"message"}
                                                         validators={validation.create("required")}
                                                     >
-                                                        <I18NInput
+                                                        <Input
                                                             label={"Message"}
                                                             description={
                                                                 "This message will be displayed to the user"
@@ -149,15 +140,7 @@ const ValidatorsTab = props => {
                                                 validator.renderSettings({
                                                     setValue,
                                                     setMessage: message => {
-                                                        setValue("message", {
-                                                            values: [
-                                                                {
-                                                                    locale: i18n.getDefaultLocale()
-                                                                        .id,
-                                                                    value: message
-                                                                }
-                                                            ]
-                                                        });
+                                                        setValue("message", message);
                                                     },
                                                     data,
                                                     Bind

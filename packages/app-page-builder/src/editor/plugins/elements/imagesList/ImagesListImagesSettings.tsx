@@ -3,8 +3,13 @@ import { css } from "emotion";
 import { sortable } from "react-sortable";
 import { FileManager } from "@webiny/app-admin/components";
 import { Grid, Cell } from "@webiny/ui/Grid";
-import { ButtonPrimary } from "@webiny/ui/Button";
 import File from "./File";
+import Accordion from "../../elementSettings/components/Accordion";
+import {
+    classes,
+    SimpleButton,
+    ButtonContainer
+} from "../../elementSettings/components/StyledComponents";
 
 const style = {
     addImagesButton: css({ clear: "both", padding: "20px 10px", textAlign: "center" }),
@@ -26,61 +31,68 @@ class Item extends React.Component {
 const SortableItem = sortable(Item);
 
 const ImagesListImagesSettings = props => {
-    const { Bind, form } = props;
+    const { Bind, submit } = props;
     return (
-        <React.Fragment>
-            <Grid>
+        <Accordion title={"Images"} defaultValue={true}>
+            <Grid className={classes.simpleGrid}>
                 <Cell span={12}>
-                    <Bind name={"images"}>
-                        {({ onChange, value }) => (
-                            <FileManager
-                                images
-                                multiple
-                                onChange={files => {
-                                    Array.isArray(value)
-                                        ? onChange([...value, ...files])
-                                        : onChange([...files]);
-                                }}
-                            >
-                                {({ showFileManager }) => (
-                                    <>
-                                        <ul className="sortable-list">
-                                            {Array.isArray(value) &&
-                                                value.map((item, i) => (
-                                                    <SortableItem
-                                                        key={i}
-                                                        onSortItems={onChange}
-                                                        items={value}
-                                                        sortId={i}
-                                                    >
-                                                        <File
-                                                            file={item}
-                                                            onRemove={() =>
-                                                                form.setState(state => {
-                                                                    const next = {
-                                                                        ...state
-                                                                    };
-                                                                    next.data.images.splice(i, 1);
-                                                                    return next;
-                                                                })
-                                                            }
-                                                        />
-                                                    </SortableItem>
-                                                ))}
-                                        </ul>
-                                        <div className={style.addImagesButton}>
-                                            <ButtonPrimary onClick={showFileManager}>
-                                                Add images...
-                                            </ButtonPrimary>
-                                        </div>
-                                    </>
-                                )}
-                            </FileManager>
-                        )}
+                    <Bind name={"images"} afterChange={submit}>
+                        {({ onChange, value: images }) => {
+                            /**
+                             * We're creating a fresh copy of value here because all of sudden
+                             * dragging a "SortableItem" started throwing TypeError: "Cannot assign to read only property"
+                             * which means the state is being mutated by "Sortable" somehow.
+                             */
+                            const value = Array.isArray(images) ? [...images] : [];
+                            return (
+                                <FileManager
+                                    images
+                                    multiple
+                                    onChange={files => {
+                                        Array.isArray(value)
+                                            ? onChange([...value, ...files])
+                                            : onChange([...files]);
+                                    }}
+                                >
+                                    {({ showFileManager }) => (
+                                        <>
+                                            <ul className="sortable-list">
+                                                {Array.isArray(value) &&
+                                                    value.map((item, i) => (
+                                                        <SortableItem
+                                                            key={i}
+                                                            onSortItems={onChange}
+                                                            items={value}
+                                                            sortId={i}
+                                                        >
+                                                            <File
+                                                                file={item}
+                                                                onRemove={() => {
+                                                                    // Remove the image at index i
+                                                                    const updatedValue = [
+                                                                        ...value.slice(0, i),
+                                                                        ...value.slice(i + 1)
+                                                                    ];
+                                                                    onChange(updatedValue);
+                                                                }}
+                                                            />
+                                                        </SortableItem>
+                                                    ))}
+                                            </ul>
+                                            <ButtonContainer>
+                                                <SimpleButton onClick={showFileManager}>
+                                                    Add images...
+                                                </SimpleButton>
+                                            </ButtonContainer>
+                                        </>
+                                    )}
+                                </FileManager>
+                            );
+                        }}
                     </Bind>
                 </Cell>
             </Grid>
-        </React.Fragment>
+        </Accordion>
     );
 };
 

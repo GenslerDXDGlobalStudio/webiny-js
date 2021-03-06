@@ -1,8 +1,31 @@
 {
   "extends": "../../tsconfig",
+  "include": ["./src"],
   "references": [
-    { "path": "../graphql" },
-    { "path": "../commodo-graphql" },
-    { "path": "../validation" }
-  ]
+    {
+      "path": "../error"
+    },
+    {
+      "path": "../handler"
+    },
+    {
+      "path": "../handler-graphql"
+    },
+    {
+      "path": "../plugins"
+    }
+  ],
+  "compilerOptions": {
+    "paths": {
+      "@webiny/error/*": ["../error/src/*"],
+      "@webiny/error": ["../error/src"],
+      "@webiny/handler/*": ["../handler/src/*"],
+      "@webiny/handler": ["../handler/src"],
+      "@webiny/handler-graphql/*": ["../handler-graphql/src/*"],
+      "@webiny/handler-graphql": ["../handler-graphql/src"],
+      "@webiny/plugins/*": ["../plugins/src/*"],
+      "@webiny/plugins": ["../plugins/src"]
+    },
+    "baseUrl": "."
+  }
 }

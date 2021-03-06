@@ -1,10 +1,8 @@
 const fs = require("fs");
 const path = require("path");
-const { green } = require("chalk");
-const { GetEnvVars } = require("env-cmd");
+const chalk = require("chalk");
 const findUp = require("find-up");
 const { PluginsContainer } = require("@webiny/plugins");
-const debug = require("debug")("webiny");
 
 const webinyRootPath = findUp.sync("webiny.root.js");
 if (!webinyRootPath) {
@@ -15,8 +13,35 @@ if (!webinyRootPath) {
 }
 const projectRoot = path.dirname(webinyRootPath);
 
+const getLogType = type => {
+    switch (type) {
+        case "log":
+            return type;
+        case "info":
+            return `${chalk.blue(type)}`;
+        case "error":
+            return `${chalk.red(type)}`;
+        case "debug":
+            return `${chalk.gray(type)}`;
+        case "success":
+            return `${chalk.green(type)}`;
+    }
+};
+
+const webinyLog = (type, ...args) => {
+    const prefix = `webiny ${getLogType(type)}: `;
+
+    const [first, ...rest] = args;
+    if (typeof first === "string") {
+        return console.log(prefix + first, ...rest);
+    }
+    return console.log(prefix, first, ...rest);
+};
+
 class Context {
     constructor() {
+        this.loadedEnvFiles = {};
+
         this.paths = {
             projectRoot
         };
@@ -85,19 +110,23 @@ class Context {
     }
 
     log(...args) {
-        debug(...args);
+        webinyLog("log", ...args);
     }
 
     info(...args) {
-        debug(...args);
+        webinyLog("info", ...args);
+    }
+
+    success(...args) {
+        webinyLog("success", ...args);
     }
 
     debug(...args) {
-        debug(...args);
+        webinyLog("debug", ...args);
     }
 
     error(...args) {
-        debug(...args);
+        webinyLog("error", ...args);
     }
 
     resolve(...dir) {
@@ -108,31 +137,31 @@ class Context {
         return path.replace(projectRoot, "<projectRoot>").replace(/\\/g, "/");
     }
 
-    async loadEnv(envPath, env, { debug = false }) {
-        if (fs.existsSync(envPath)) {
-            const consoleError = console.error;
-            const envFile = this.replaceProjectRoot(envPath);
-            try {
-                // We need to disable console.error because `env-cmd` is printing some ugly errors we don't want in our output.
-                // eslint-disable-next-line @typescript-eslint/no-empty-function
-                console.error = () => {};
-                const envConfig = await GetEnvVars({
-                    rc: {
-                        environments: ["default", env],
-                        filePath: envPath
-                    }
-                });
+    /**
+     * Uses `dotenv` lib to load env files, by accepting a simple file path.
+     * @param filePath
+     * @param debug
+     * @returns {Promise<void>}
+     */
+    async loadEnv(filePath, { debug = false } = {}) {
+        if (this.loadedEnvFiles[filePath]) {
+            return;
+        }
 
-                Object.assign(process.env, envConfig);
-                if (debug) {
-                    console.log(`💡 Loaded ${green(env)} environment from ${green(envFile)}.`);
-                }
-            } catch (err) {
-                if (debug) {
-                    console.log(`💡 No environments were found in ${green(envFile)}. Skipping.`);
-                }
-            } finally {
-                console.error = consoleError;
+        if (!fs.existsSync(filePath)) {
+            debug && this.info(chalk.yellow(`No environment file found on ${filePath}.`));
+            return;
+        }
+
+        try {
+            require("dotenv").config({ path: filePath });
+            debug && this.success(`Loaded environment variables from ${filePath}.`);
+            this.loadedEnvFiles[filePath] = true;
+        } catch (err) {
+            if (debug) {
+                this.error(`Could not load env variables from ${filePath}:`);
+                this.error(err.message);
+                console.log();
             }
         }
     }

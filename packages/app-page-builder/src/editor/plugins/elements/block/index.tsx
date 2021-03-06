@@ -1,20 +1,19 @@
 import React from "react";
-import { redux } from "@webiny/app-page-builder/editor/redux";
 import Block from "./Block";
-import { set } from "dot-prop-immutable";
 import {
-    createElement,
-    createRow,
-    createColumn,
-    cloneElement,
-    addElementToParent
-} from "@webiny/app-page-builder/editor/utils";
+    CreateElementActionEvent,
+    DeleteElementActionEvent,
+    updateElementAction
+} from "../../../recoil/actions";
+import { addElementToParent, createDroppedElement } from "../../../helpers";
 import {
-    updateElement,
-    deleteElement,
-    elementCreated
-} from "@webiny/app-page-builder/editor/actions";
-import { PbEditorPageElementPlugin } from "@webiny/app-page-builder/types";
+    DisplayMode,
+    EventActionHandlerActionCallableResponse,
+    PbEditorPageElementPlugin,
+    PbEditorElement
+} from "../../../../types";
+import { AfterDropElementActionEvent } from "../../../recoil/actions/afterDropElement";
+import { createInitialPerDeviceSettingValue } from "../../elementSettings/elementSettingsUtils";
 
 export default (): PbEditorPageElementPlugin => {
     return {
@@ -22,43 +21,53 @@ export default (): PbEditorPageElementPlugin => {
         type: "pb-editor-page-element",
         elementType: "block",
         settings: [
-            "pb-editor-page-element-settings-background",
-            "pb-editor-page-element-settings-animation",
-            "",
-            "pb-editor-page-element-settings-border",
-            "pb-editor-page-element-settings-shadow",
-            "",
-            "pb-editor-page-element-settings-padding",
-            "pb-editor-page-element-settings-margin",
-            "pb-editor-page-element-settings-width",
-            "pb-editor-page-element-settings-height",
-            "pb-editor-page-element-settings-horizontal-align-flex",
-            "pb-editor-page-element-settings-vertical-align",
-            "",
+            "pb-editor-page-element-style-settings-background",
+            "pb-editor-page-element-style-settings-animation",
+            "pb-editor-page-element-style-settings-border",
+            "pb-editor-page-element-style-settings-shadow",
+            "pb-editor-page-element-style-settings-padding",
+            "pb-editor-page-element-style-settings-margin",
+            "pb-editor-page-element-style-settings-width",
+            "pb-editor-page-element-style-settings-height",
+            "pb-editor-page-element-style-settings-horizontal-align-flex",
+            "pb-editor-page-element-style-settings-vertical-align",
             "pb-editor-page-element-settings-clone",
-            "pb-editor-page-element-settings-delete",
-            ""
+            "pb-editor-page-element-settings-delete"
         ],
         create(options = {}) {
             return {
                 type: "block",
-                elements: [
-                    createRow({
-                        elements: [createColumn({ data: { width: 100 } })]
-                    })
-                ],
+                elements: [],
                 data: {
                     settings: {
-                        width: { value: "1000px" },
+                        width: createInitialPerDeviceSettingValue(
+                            { value: "100%" },
+                            DisplayMode.DESKTOP
+                        ),
                         margin: {
-                            mobile: { top: 15, left: 15, right: 15, bottom: 15 },
-                            desktop: { top: 25, left: 0, right: 0, bottom: 25 },
-                            advanced: true
+                            ...createInitialPerDeviceSettingValue(
+                                {
+                                    top: "0px",
+                                    right: "0px",
+                                    bottom: "0px",
+                                    left: "0px",
+                                    advanced: true
+                                },
+                                DisplayMode.DESKTOP
+                            )
                         },
-                        padding: {
-                            mobile: { all: 10 },
-                            desktop: { all: 0 }
-                        }
+                        padding: createInitialPerDeviceSettingValue(
+                            { all: "10px" },
+                            DisplayMode.DESKTOP
+                        ),
+                        horizontalAlignFlex: createInitialPerDeviceSettingValue(
+                            "center",
+                            DisplayMode.DESKTOP
+                        ),
+                        verticalAlign: createInitialPerDeviceSettingValue(
+                            "flex-start",
+                            DisplayMode.DESKTOP
+                        )
                     }
                 },
                 ...options
@@ -68,40 +77,40 @@ export default (): PbEditorPageElementPlugin => {
             return <Block {...props} />;
         },
         // This callback is executed when another element is dropped on the drop zones with type "block"
-        onReceived({ source, target, position = null }: any) {
-            let dispatchNew = false;
-            let element;
-            if (source.path) {
-                element = cloneElement(source);
-            } else {
-                dispatchNew = true;
-                element = createElement(source.type, {}, target);
-            }
+        onReceived({ source, target, position = null, state, meta }) {
+            const element = createDroppedElement(source as any, target);
 
             const block = addElementToParent(element, target, position);
 
-            // Dispatch update action
-            redux.store.dispatch(updateElement({ element: block }));
+            const result = updateElementAction(state, meta, {
+                element: block,
+                history: true
+            }) as EventActionHandlerActionCallableResponse;
 
-            // Delete exiting element
-            if (source.path) {
-                redux.store.dispatch(deleteElement({ element: source }));
-            }
+            result.actions.push(
+                new AfterDropElementActionEvent({
+                    element
+                })
+            );
 
-            if (dispatchNew) {
-                redux.store.dispatch(elementCreated({ element, source }));
-            }
-        },
-        onChildDeleted({ element }) {
-            if (element.elements.length === 0) {
-                element = set(element, "elements", [
-                    createRow({
-                        elements: [createColumn({ data: { width: 100 } })]
+            if (source.id) {
+                // Delete source element
+                result.actions.push(
+                    new DeleteElementActionEvent({
+                        element: source as PbEditorElement
                     })
-                ]);
+                );
 
-                redux.store.dispatch(updateElement({ element }));
+                return result;
             }
+
+            result.actions.push(
+                new CreateElementActionEvent({
+                    element,
+                    source: source as any
+                })
+            );
+            return result;
         }
     };
 };

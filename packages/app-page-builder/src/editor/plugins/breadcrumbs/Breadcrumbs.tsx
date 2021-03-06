@@ -1,81 +1,104 @@
-import * as React from "react";
-import { connect } from "react-redux";
-import { isEqual } from "lodash";
-import { css } from "emotion";
-import { getActiveElement, getElement } from "@webiny/app-page-builder/editor/selectors";
-import { activateElement, highlightElement } from "@webiny/app-page-builder/editor/actions";
+import React, { useCallback, useEffect, useState } from "react";
+import { useRecoilCallback, useRecoilSnapshot, useRecoilState, useRecoilValue } from "recoil";
+import { PbEditorElement } from "../../../types";
+import {
+    activeElementAtom,
+    elementByIdSelector,
+    elementsAtom,
+    highlightElementAtom
+} from "../../recoil/modules";
+import { breadcrumbs } from "./styles";
 
-const breadcrumbs = css({
-    display: "flex",
-    zIndex: 20,
-    flexDirection: "row",
-    padding: 0,
-    position: "fixed",
-    left: 55,
-    bottom: 0,
-    width: "calc(100% - 55px)",
-    backgroundColor: "var(--mdc-theme-surface)",
-    borderTop: "1px solid var(--mdc-theme-on-background)",
-    fontSize: "14px",
-    "> li": {
-        cursor: "pointer",
-        ".element": {
-            color: "var(--mdc-theme-secondary)",
-            padding: "5px",
-            display: "inline-block",
-            "&:hover": {
-                backgroundColor: "var(--mdc-theme-background)",
-                color: "var(--mdc-theme-on-surface)"
+const Breadcrumbs: React.FunctionComponent = () => {
+    const [items, setItems] = useState([]);
+    const [activeElement, setActiveElementAtomValue] = useRecoilState(activeElementAtom);
+    const element = useRecoilValue(elementByIdSelector(activeElement));
+    const [highlightElementAtomValue, setHighlightElementAtomValue] = useRecoilState(
+        highlightElementAtom
+    );
+    const snapshot = useRecoilSnapshot();
+    const lazyHighlight = useRecoilCallback(
+        ({ set }) => async (id: string) => {
+            if (highlightElementAtomValue) {
+                // Update the element that is currently highlighted
+                set(elementsAtom(highlightElementAtomValue), prevValue => {
+                    return {
+                        ...prevValue,
+                        isHighlighted: false
+                    };
+                });
             }
-        },
-        ".divider": {
-            color: "var(--mdc-theme-text-secondary-on-background)"
-        }
-    }
-});
 
-const Breadcrumbs = ({ elements, activateElement, highlightElement }) => {
-    if (!elements) {
+            // Set the new highlighted element
+            setHighlightElementAtomValue(id);
+
+            // Update the element that is about to be highlighted
+            set(elementsAtom(id), prevValue => {
+                return {
+                    ...prevValue,
+                    isHighlighted: true
+                };
+            });
+        },
+        [highlightElementAtomValue]
+    );
+
+    const highlightElement = useCallback(
+        (id: string) => {
+            lazyHighlight(id);
+        },
+        [lazyHighlight]
+    );
+
+    const activateElement = useCallback((id: string) => {
+        setActiveElementAtomValue(id);
+    }, []);
+
+    const createBreadCrumbs = async (activeElement: PbEditorElement) => {
+        const list = [];
+        let element = activeElement;
+        while (element.parent) {
+            list.push({
+                id: element.id,
+                type: element.type
+            });
+
+            if (!element.parent) {
+                break;
+            }
+
+            element = await snapshot.getPromise(elementByIdSelector(element.parent));
+        }
+        setItems(list.reverse());
+    };
+
+    useEffect(() => {
+        if (element) {
+            createBreadCrumbs(element);
+        }
+    }, [element]);
+
+    if (!element) {
         return null;
     }
 
     return (
         <ul className={breadcrumbs}>
-            {elements.map((el, index) => (
+            {items.map(({ id, type }, index) => (
                 <li
-                    key={el.id}
-                    onMouseOver={() => highlightElement({ element: el.id })}
-                    onClick={() => activateElement({ element: el.id })}
+                    key={id}
+                    onMouseOver={() => highlightElement(id)}
+                    onClick={() => activateElement(id)}
                 >
-                    <span className={"element"}>
-                        {el.type.replace("pb-editor-page-element-", "")}
+                    <span
+                        className={"element"}
+                        style={{ "--element-count": index } as React.CSSProperties}
+                    >
+                        {type}
                     </span>
-                    {elements.length - 1 > index ? (
-                        <span className={"divider"}>&nbsp;&gt;&nbsp;</span>
-                    ) : null}
                 </li>
             ))}
         </ul>
     );
 };
-
-export default connect<any, any, any>(
-    state => {
-        const element = getActiveElement(state);
-        if (!element) {
-            return { elements: null };
-        }
-
-        const paths = element.path.split(".").slice(1);
-        const elements = paths.map((path, index) => {
-            const elPath = [0, ...paths.slice(0, index + 1)].join(".");
-            const el = getElement(state, elPath);
-            return { id: el.id, type: el.type, index: path, active: el.id === element.id };
-        });
-
-        return { elements };
-    },
-    { activateElement, highlightElement },
-    null,
-    { areStatePropsEqual: isEqual }
-)(Breadcrumbs);
+export default React.memo(Breadcrumbs);

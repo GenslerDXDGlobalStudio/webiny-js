@@ -1,108 +1,94 @@
 import uniqid from "uniqid";
 
 context("Menus Module", () => {
+    let createdPage, id;
+
     beforeEach(() => cy.login());
 
+    after(() => cy.pbDeletePage({ id: createdPage.id }));
+
     it("should be able add all types items to the menu", () => {
-        const id = uniqid();
+        id = uniqid();
+
+        // eslint-disable-next-line
+        cy.pbCreatePage({ category: "static" }).then(page => {
+            createdPage = page;
+
+            cy.pbUpdatePage({
+                id: page.id,
+                data: {
+                    title: `Menus-Module-Welcome-${id}`
+                }
+            });
+            cy.pbPublishPage({ id: page.id });
+        });
+
         cy.visit("/page-builder/menus");
+        cy.findByTestId("data-list-new-record-button").click();
 
         // Test "Page List".
-        cy.findByText(/\+ Add Menu Item/i)
+        cy.findByText(/\+ Add Menu Item/i).click();
+        cy.findByText("Page list").click();
+        cy.findByLabelText("Title").type(`Page List ${id}`);
+        cy.findByText(/Save Menu Item/i)
             .click()
-            .findByText("Page list")
-            .click()
-            .findByLabelText("Title")
-            .type(`Page List ${id}`)
-            .findByText(/Save Menu Item/i)
-            .click()
-            .wait(200)
-            .findByText("Value is required.")
-            .should("exist")
-            .findByLabelText("Category")
-            .type(`Static`)
-            .findByText("Static")
-            .click()
-            .findByText("Sort by...")
+            .wait(200);
+        cy.findByText("Value is required.").should("exist");
+        cy.findByLabelText("Category").type(`Static`);
+        cy.findByText("Static").click();
+        cy.findByText("Sort by...")
             .prev()
-            .select("Title")
-            .findByText("Sort direction...")
+            .select("Title");
+        cy.findByText("Sort direction...")
             .prev()
-            .select("Descending")
-            .findByLabelText("Tags")
-            .type(`1: ${id}`)
-            .findByText(`1: ${id}`)
-            .click()
-            .findByLabelText("Tags")
-            .type(`2: ${id}`)
-            .findByText(`2: ${id}`)
-            .click()
-            .findByText(/Save Menu Item/i)
-            .click();
+            .select("Descending");
+        cy.findByLabelText("Tags").type(`1: ${id}`);
+        cy.findByText(`1: ${id}`).click();
+        cy.findByLabelText("Tags").type(`2: ${id}`);
+        cy.findByText(`2: ${id}`).click();
+        cy.findByText(/Save Menu Item/i).click();
 
         // Test "Page".
-        cy.findByText(/\+ Add Menu Item/i)
+        cy.findByText(/\+ Add Menu Item/i).click();
+        cy.findByText("Page").click();
+        cy.findByLabelText("Title").type(`Single Page Item ${id}`);
+        cy.findByText(/Save Menu Item/i)
             .click()
-            .findByText("Page")
-            .click()
-            .findByLabelText("Title")
-            .type(`Single Page Item ${id}`)
-            .findByText(/Save Menu Item/i)
-            .click()
-            .wait(200)
-            .findByText("Value is required.")
-            .should("exist")
-            .findByLabelText("Page")
-            .type(`Error Page`)
-            .findByText("Error Page")
-            .click()
-            .findByText(/Save Menu Item/i)
-            .click();
+            .wait(200);
+        cy.findByText("Value is required.").should("exist");
+        cy.findByLabelText("Page").type(`Menus`);
+        cy.findByText(`Menus-Module-Welcome-${id}`).click();
+        cy.findByText(/Save Menu Item/i).click();
 
         // Test "Link".
-        cy.findByText(/\+ Add Menu Item/i)
+        cy.findByText(/\+ Add Menu Item/i).click();
+        cy.findByText("Link").click();
+        cy.findByLabelText("Title").type(`Simple Link Item ${id}`);
+        cy.findByLabelText("URL").type(`https://123`);
+        cy.findByText(/Save Menu Item/i)
             .click()
-            .findByText("Link")
-            .click()
-            .findByLabelText("Title")
-            .type(`Simple Link Item ${id}`)
-            .findByLabelText("URL")
-            .type(`https://123`)
-            .findByText(/Save Menu Item/i)
-            .click()
-            .wait(200)
-            .findByText("Value must be a valid URL.")
-            .should("exist")
-            .findByLabelText("URL")
+            .wait(200);
+        cy.findByText("Value must be a valid URL.").should("exist");
+        cy.findByLabelText("URL")
             .clear()
-            .type(`https://${id}.com`)
-            .findByText(/Save Menu Item/i)
-            .click();
+            .type(`https://${id}.com`);
+        cy.findByText(/Save Menu Item/i).click();
 
         // Test "Folder".
-        cy.findByText(/\+ Add Menu Item/i)
+        cy.findByText(/\+ Add Menu Item/i).click();
+        cy.findByText("Folder").click();
+        cy.findByText(/Save Menu Item/i)
             .click()
-            .findByText("Folder")
-            .click()
-            .findByText(/Save Menu Item/i)
-            .click()
-            .wait(200)
-            .findByText("Value is required.")
-            .should("exist")
-            .findByLabelText("Title")
-            .type(`Simple Folder Item ${id}`)
-            .findByText(/Save Menu Item/i)
-            .click();
+            .wait(200);
+        cy.findByText("Value is required.").should("exist");
+        cy.findByLabelText("Title").type(`Simple Folder Item ${id}`);
+        cy.findByText(/Save Menu Item/i).click();
 
-        cy.findByLabelText("Name")
-            .type(`Cool Menu ${id}`)
-            .findByText("Save menu")
-            .findByLabelText("Slug")
-            .type(`cool-menu-${id}`)
-            .findByLabelText("Description")
-            .type("This is a cool test.")
+        cy.findByLabelText("Name").type(`Cool Menu ${id}`);
+        cy.findByLabelText("Slug").type(`cool-menu-${id}`);
+        cy.findByLabelText("Description").type("This is a cool test.");
 
-            .findByText("Save menu")
+        cy.findByText("Save menu")
             .click()
             .wait(2000)
             .reload();

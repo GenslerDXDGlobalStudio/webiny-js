@@ -1,6 +1,6 @@
 {
   "name": "@webiny/api-plugin-security-cognito",
-  "version": "4.14.0",
+  "version": "5.0.0-beta.4",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -12,24 +12,28 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@webiny/api-security": "^4.14.0",
-    "@webiny/graphql": "^4.14.0",
-    "graphql-tag": "^2.10.1",
+    "@webiny/api-security": "^5.0.0-beta.4",
+    "@webiny/api-security-tenancy": "^5.0.0-beta.4",
+    "@webiny/handler": "^5.0.0-beta.4",
+    "@webiny/handler-graphql": "^5.0.0-beta.4",
+    "@webiny/handler-http": "^5.0.0-beta.4",
     "jsonwebtoken": "^8.5.1",
     "jwk-to-pem": "^2.0.1",
-    "request-promise": "^4.2.4"
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
-    "@babel/core": "^7.5.5"
+    "@babel/core": "^7.5.5",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.1.3"
   },
   "publishConfig": {
     "access": "public",
     "directory": "dist"
   },
   "scripts": {
-    "build": "rimraf ./dist *.tsbuildinfo && babel src -d dist --source-maps --copy-files --extensions \".ts\"",
-    "watch": "babel src -d dist --source-maps --copy-files --extensions \".ts\" --watch",
+    "build": "rimraf ./dist '*.tsbuildinfo' && babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" && yarn postbuild",
+    "watch": "babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" --watch",
     "postbuild": "cp package.json LICENSE README.md dist/ && tsc -p tsconfig.build.json"
   },
   "adio": {
@@ -39,5 +43,5 @@
       ]
     }
   },
-  "gitHead": "71cab7d5607b2e32a63034e324a663770507b32b"
+  "gitHead": "8476da73b653c89cc1474d968baf55c1b0ae0e5f"
 }

@@ -1,9 +1,9 @@
 import { validation } from "@webiny/validation";
-import { FbFormFieldValidatorPlugin } from "@webiny/app-form-builder/types";
+import { FbFormFieldValidatorPlugin } from "../../../types";
 
 export default {
-    type: "form-field-validator",
-    name: "form-field-validator-max-length",
+    type: "fb-form-field-validator",
+    name: "fb-form-field-validator-max-length",
     validator: {
         name: "maxLength",
         validate: (value, validator) => {

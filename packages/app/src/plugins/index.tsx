@@ -1,16 +1,16 @@
 import React, { ReactNode, FunctionComponentElement } from "react";
 import warning from "warning";
-import { getPlugin, getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { Plugin } from "@webiny/plugins/types";
-import fileUploadPlugin from "./fileUploaderPlugin";
-import imagePlugin from "./imagePlugin";
+import imagePlugin from "./image";
 
-export { fileUploadPlugin, imagePlugin };
+export { imagePlugin };
 
 type RenderPluginOptions<T> = {
     wrapper?: boolean;
     fn?: string;
     filter?: (value: T, index: number, array: T[]) => boolean;
+    reverse?: boolean;
 };
 
 interface RenderPlugin {
@@ -33,7 +33,7 @@ const PluginsComponent = (props: { [key: string]: any }): FunctionComponentEleme
 export const renderPlugin: RenderPlugin = (name, params = {}, options = {}) => {
     const { wrapper = true, fn = "render" } = options;
 
-    const plugin = getPlugin(name);
+    const plugin = plugins.byName(name);
     warning(plugin, `No such plugin "${name}"`);
 
     if (!plugin) {
@@ -54,11 +54,17 @@ export const renderPlugin: RenderPlugin = (name, params = {}, options = {}) => {
 };
 
 export const renderPlugins: RenderPlugins = (type, params = {}, options = {}) => {
-    const { wrapper = true, fn = "render", filter = v => v } = options;
+    const { wrapper = true, fn = "render", filter = v => v, reverse } = options;
 
-    const content = getPlugins(type)
+    const content = plugins
+        .byType(type)
         .filter(filter)
-        .map(plugin => renderPlugin(plugin.name, params, { wrapper, fn }));
+        .map(plugin => renderPlugin(plugin.name, params, { wrapper, fn }))
+        .filter(Boolean);
+
+    if (reverse) {
+        content.reverse();
+    }
 
     return wrapper ? (
         <PluginsComponent type={type} params={params} fn={fn}>
@@ -69,4 +75,4 @@ export const renderPlugins: RenderPlugins = (type, params = {}, options = {}) =>
     );
 };
 
-export default [imagePlugin, fileUploadPlugin];
+export default [imagePlugin];

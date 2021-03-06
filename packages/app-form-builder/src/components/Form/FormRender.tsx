@@ -1,7 +1,7 @@
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { cloneDeep, get } from "lodash";
 import React, { useEffect, useRef, useMemo } from "react";
-import { useApolloClient } from "react-apollo";
+import { useApolloClient } from "@apollo/react-hooks";
 import { createReCaptchaComponent, createTermsOfServiceComponent } from "./components";
 import {
     createFormSubmission,
@@ -19,15 +19,15 @@ import {
     FbFormSubmissionData,
     FbFormFieldValidatorPlugin,
     FbFormLayoutPlugin
-} from "@webiny/app-form-builder/types";
+} from "../../types";
 import { PbThemePlugin } from "@webiny/app-page-builder/types";
-import { useI18N } from "@webiny/app-i18n/hooks/useI18N";
 
 declare global {
     // eslint-disable-next-line
     namespace JSX {
         interface IntrinsicElements {
-            "ssr-cache": {
+            // @ts-ignore
+            "ps-tag": {
                 class?: string;
                 id?: string;
             };
@@ -37,7 +37,7 @@ declare global {
 
 const FormRender = (props: FbFormRenderComponentProps) => {
     const theme = useMemo(
-        () => Object.assign({}, ...getPlugins("pb-theme").map((pl: PbThemePlugin) => pl.theme)),
+        () => Object.assign({}, ...plugins.byType("pb-theme").map((pl: PbThemePlugin) => pl.theme)),
         []
     );
 
@@ -52,8 +52,6 @@ const FormRender = (props: FbFormRenderComponentProps) => {
 
     const reCaptchaResponseToken = useRef("");
     const termsOfServiceAccepted = useRef(false);
-
-    const { getValue } = useI18N();
 
     if (!data.id) {
         return null;
@@ -72,7 +70,9 @@ const FormRender = (props: FbFormRenderComponentProps) => {
 
     const getFields = () => {
         const fields: any = cloneDeep(layout);
-        const validatorPlugins = getPlugins<FbFormFieldValidatorPlugin>("form-field-validator");
+        const validatorPlugins = plugins.byType<FbFormFieldValidatorPlugin>(
+            "fb-form-field-validator"
+        );
 
         fields.forEach(row => {
             row.forEach((id, idIndex) => {
@@ -91,7 +91,7 @@ const FormRender = (props: FbFormRenderComponentProps) => {
                         }
 
                         return async value => {
-                            let isInvalid = true;
+                            let isInvalid;
                             try {
                                 const result = await validatorPlugin.validator.validate(
                                     value,
@@ -103,7 +103,7 @@ const FormRender = (props: FbFormRenderComponentProps) => {
                             }
 
                             if (isInvalid) {
-                                throw new Error(getValue(item.message) || "Invalid value.");
+                                throw new Error(item.message || "Invalid value.");
                             }
                         };
                     })
@@ -166,8 +166,8 @@ const FormRender = (props: FbFormRenderComponentProps) => {
     const layouts = React.useMemo(
         () =>
             [
-                ...(get(theme, "forms.layouts") || []),
-                ...getPlugins<FbFormLayoutPlugin>("form-layout").map(pl => pl.layout)
+                ...(get(theme, "formBuilder.layouts") || []),
+                ...plugins.byType<FbFormLayoutPlugin>("form-layout").map(pl => pl.layout)
             ].reduce((acc, item) => {
                 if (!acc.find(l => l.name === item.name)) {
                     acc.push(item);
@@ -211,7 +211,7 @@ const FormRender = (props: FbFormRenderComponentProps) => {
 
     return (
         <>
-            <ssr-cache data-class="fb-form" data-id={data.parent} />
+            <ps-tag data-key="fb-form" data-value={data.parent} />
             <LayoutRenderComponent {...layoutProps} />
         </>
     );

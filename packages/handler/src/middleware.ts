@@ -2,14 +2,14 @@
  * Compose a single middleware from the array of middleware functions
  */
 export default (functions: Array<Function> = []): Function => {
-    return (params: any): Promise<any> => {
+    return (...args): Promise<any> => {
         if (!functions.length) {
             return Promise.resolve();
         }
 
         // Create a clone of function chain to prevent modifying the original array with `shift()`
         const chain = [...functions];
-        return new Promise((parentResolve, parentReject) => {
+        return new Promise((parentResolve: any, parentReject) => {
             const next = async () => {
                 const fn = chain.shift();
                 if (!fn) {
@@ -18,7 +18,7 @@ export default (functions: Array<Function> = []): Function => {
 
                 return new Promise(async (resolve, reject) => {
                     try {
-                        const result = await fn(params, resolve);
+                        const result = await fn(...args, resolve);
                         if (typeof result !== "undefined") {
                             return parentResolve(result);
                         }
@@ -30,7 +30,7 @@ export default (functions: Array<Function> = []): Function => {
                         return next();
                     })
                     .then(() => {
-                        parentResolve(params);
+                        parentResolve(...args);
                     })
                     .catch(e => {
                         parentReject(e);

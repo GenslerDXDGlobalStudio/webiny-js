@@ -1,43 +1,69 @@
 import React, { useCallback } from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import { useRecoilValue } from "recoil";
 import styled from "@emotion/styled";
-import isNumeric from "isnumeric";
-import { set, isEqual } from "lodash";
 import SingleImageUpload from "@webiny/app-admin/components/SingleImageUpload";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getElement } from "@webiny/app-page-builder/editor/selectors";
-
-const position = { left: "flex-start", center: "center", right: "flex-end" };
+import { PbEditorElement } from "../../../../types";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { UpdateElementActionEvent } from "../../../recoil/actions";
+import { uiAtom } from "../../../recoil/modules";
 
 const AlignImage = styled("div")((props: any) => ({
     img: {
-        alignSelf: position[props.align]
+        alignSelf: props.align
     }
 }));
 
-const ImageContainer = props => {
-    const { horizontalAlign, updateElement, element } = props;
-    const image = { ...props.image };
+type ImageContainerType = {
+    element: PbEditorElement;
+};
+const ImageContainer: React.FunctionComponent<ImageContainerType> = ({ element }) => {
+    const { displayMode } = useRecoilValue(uiAtom);
+    const handler = useEventActionHandler();
+    const {
+        id,
+        data: { image = {}, settings = {} }
+    } = element || {};
+    const { horizontalAlignFlex } = settings;
+    // Use per-device style
+    const align = horizontalAlignFlex[displayMode] || "center";
 
     const imgStyle = { width: null, height: null };
     if (image.width) {
         const { width } = image;
-        imgStyle.width = isNumeric(width) ? parseInt(width) : width;
+        imgStyle.width = width;
     }
     if (image.height) {
         const { height } = image;
-        imgStyle.height = isNumeric(height) ? parseInt(height) : height;
+        imgStyle.height = height;
     }
 
     const onChange = useCallback(
-        async data => {
-            updateElement({ element: set(element, "data.image.file", data), merge: true });
+        async (data: { [key: string]: string }) => {
+            handler.trigger(
+                new UpdateElementActionEvent({
+                    element: {
+                        ...element,
+                        data: {
+                            ...element.data,
+                            image: {
+                                ...(element.data.image || {}),
+                                file: data
+                            }
+                        }
+                    },
+                    history: true
+                })
+            );
         },
-        [element]
+        [id]
     );
+    // required due to re-rendering when set content atom and still nothing in elements atom
+    if (!element) {
+        return null;
+    }
 
     return (
-        <AlignImage align={horizontalAlign}>
+        <AlignImage align={align}>
             <SingleImageUpload
                 imagePreviewProps={{ style: imgStyle, srcSet: "auto" }}
                 onChange={onChange}
@@ -47,18 +73,4 @@ const ImageContainer = props => {
     );
 };
 
-export default connect<any, any, any>(
-    (state, { elementId }) => {
-        const element = getElement(state, elementId);
-        const { image = {}, settings = {} } = element.data;
-
-        return {
-            element: { id: element.id, type: element.type, path: element.path },
-            image,
-            horizontalAlign: settings.horizontalAlign || "center"
-        };
-    },
-    { updateElement },
-    null,
-    { areStatePropsEqual: isEqual }
-)(React.memo(ImageContainer));
+export default React.memo(ImageContainer);

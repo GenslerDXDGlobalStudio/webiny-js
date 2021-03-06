@@ -1,17 +1,20 @@
 import React from "react";
 import { useRouter } from "@webiny/react-router";
-import { useApolloClient } from "react-apollo";
-import { cloneDeep, get } from "lodash";
+import { useApolloClient } from "@apollo/react-hooks";
 import { useHandlers } from "@webiny/app/hooks/useHandlers";
 import {
-    GET_FORM,
     CREATE_REVISION_FROM,
     DELETE_REVISION,
     PUBLISH_REVISION,
     UNPUBLISH_REVISION
-} from "@webiny/app-form-builder/admin/viewsGraphql";
+} from "../../../graphql";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { FbFormModel } from "@webiny/app-form-builder/types";
+import { FbFormModel } from "../../../../types";
+import {
+    removeRevisionFromFormCache,
+    updateLatestRevisionInListCache,
+    addRevisionToRevisionsCache
+} from "../../../views/cache";
 
 export type UseRevisionProps = {
     revision: FbFormModel;
@@ -34,51 +37,43 @@ export const useRevision = ({ revision, form }: UseRevisionProps) => {
             const { data: res } = await client.mutate({
                 mutation: CREATE_REVISION_FROM,
                 variables: { revision: revision.id },
-                refetchQueries: ["FormsListForms"]
+                update(cache, { data }) {
+                    const newRevision = data.formBuilder.revision.data;
+                    updateLatestRevisionInListCache(cache, newRevision);
+                    addRevisionToRevisionsCache(cache, newRevision);
+                }
             });
-            const { data, error } = res.forms.revision;
+
+            const { data, error } = res.formBuilder.revision;
 
             if (error) {
                 return showSnackbar(error.message);
             }
 
-            history.push(`/forms/${data.id}`);
+            history.push(`/form-builder/forms/${encodeURIComponent(data.id)}`);
         },
         editRevision: () => () => {
-            history.push(`/forms/${revision.id}`);
+            history.push(`/form-builder/forms/${encodeURIComponent(revision.id)}`);
         },
         deleteRevision: () => async () => {
             await client.mutate({
                 mutation: DELETE_REVISION,
-                variables: { id: revision.id },
-                refetchQueries: ["FormsListForms"],
+                variables: { revision: revision.id },
                 update: (cache, updated) => {
-                    const error = get(updated, "data.forms.deleteRevision.error");
+                    const { error } = updated.data.formBuilder.deleteForm; // `deleteForm` because we assigned an alias
                     if (error) {
                         return showSnackbar(error.message);
                     }
 
-                    // Should we redirect to list (remove "?id=XYZ" from URL?):
-                    // If parent was deleted, that means all revisions were deleted, and we can redirect.
-                    if (revision.parent === revision.id) {
-                        return history.push("/forms");
-                    }
+                    // We have other revisions, update form's cache
+                    const revisions = removeRevisionFromFormCache(cache, form, revision);
 
-                    const gqlParams = { query: GET_FORM, variables: { id: form.id } };
-                    const data: any = cloneDeep(cache.readQuery(gqlParams));
-                    const indexOfDeleted = data.forms.form.data.revisions.findIndex(
-                        item => item.id === revision.id
-                    );
-
-                    data.forms.form.data.revisions.splice(indexOfDeleted, 1);
-                    cache.writeQuery({
-                        ...gqlParams,
-                        data
-                    });
-
-                    // If currently selected revision (from left list of forms) was deleted.
                     if (revision.id === form.id) {
-                        return history.push("/forms");
+                        updateLatestRevisionInListCache(cache, revisions[0]);
+                        // Redirect to the first revision in the list of all form revisions.
+                        return history.push(
+                            `/form-builder/forms?id=${encodeURIComponent(revisions[0].id)}`
+                        );
                     }
                 }
             });
@@ -86,11 +81,10 @@ export const useRevision = ({ revision, form }: UseRevisionProps) => {
         publishRevision: () => async () => {
             const { data: res } = await client.mutate({
                 mutation: PUBLISH_REVISION,
-                variables: { id: revision.id },
-                refetchQueries: ["FormsListForms"]
+                variables: { revision: revision.id }
             });
 
-            const { error } = res.forms.publishRevision;
+            const { error } = res.formBuilder.publishRevision;
             if (error) {
                 return showSnackbar(error.message);
             }
@@ -104,8 +98,7 @@ export const useRevision = ({ revision, form }: UseRevisionProps) => {
         unpublishRevision: () => async () => {
             await client.mutate({
                 mutation: UNPUBLISH_REVISION,
-                variables: { id: revision.id },
-                refetchQueries: ["FormsListForms"]
+                variables: { revision: revision.id }
             });
         }
     });

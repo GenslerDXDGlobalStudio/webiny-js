@@ -1,36 +1,32 @@
-import * as React from "react";
+import React from "react";
 import { css } from "emotion";
-import { ElementRoot } from "@webiny/app-page-builder/render/components/ElementRoot";
-import ConnectedElement from "@webiny/app-page-builder/editor/components/ConnectedElement";
+import get from "lodash/get";
+import { ElementRoot } from "../../../../render/components/ElementRoot";
 
 const center = css({ textAlign: "center" });
 
 const Icon = ({ element }) => {
     return (
         <ElementRoot element={element}>
-            {({ getAllClasses, elementStyle }) => (
-                <ConnectedElement elementId={element.id}>
-                    {element => {
-                        const { svg = null } = element.data.icon;
-                        const className = getAllClasses(
-                            "webiny-pb-base-page-element-style webiny-pb-page-element-icon",
-                            center
-                        );
+            {({ getAllClasses, elementStyle }) => {
+                const svg = get(element, "data.icon.svg", null);
+                const className = getAllClasses(
+                    "webiny-pb-base-page-element-style webiny-pb-page-element-icon",
+                    center
+                );
 
-                        if (!svg) {
-                            return null;
-                        }
+                if (!svg) {
+                    return null;
+                }
 
-                        return (
-                            <div
-                                style={elementStyle}
-                                className={className}
-                                dangerouslySetInnerHTML={{ __html: svg }}
-                            />
-                        );
-                    }}
-                </ConnectedElement>
-            )}
+                return (
+                    <div
+                        style={elementStyle}
+                        className={className}
+                        dangerouslySetInnerHTML={{ __html: svg }}
+                    />
+                );
+            }}
         </ElementRoot>
     );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { Link } from "@webiny/react-router";
-
 import { AdminWelcomeScreenWidgetPlugin } from "@webiny/app-plugin-admin-welcome-screen/types";
 import { ButtonSecondary } from "@webiny/ui/Button";
 import { css } from "emotion";
@@ -19,7 +18,7 @@ const buttonStyle = css({
 const plugin: AdminWelcomeScreenWidgetPlugin = {
     type: "admin-welcome-screen-widget",
     name: "admin-welcome-screen-widget-headless-cms",
-    scopes: [],
+    permission: "cms.contentModel",
     widget: {
         cta: (
             <Link to="/cms/content-models" className={linkStyle}>

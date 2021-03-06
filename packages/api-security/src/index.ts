@@ -1,3 +1,4 @@
-export { default as withUser } from "./withUser";
-export { default as hasScope } from "./hasScope";
-export { default as SecurityError } from "./SecurityError";
+export { hasPermission } from "./hasPermission";
+export { SecurityIdentity } from "./authenticator/SecurityIdentity";
+export { default as NotAuthorizedResponse } from "./NotAuthorizedResponse";
+export { default as NotAuthorizedError } from "./NotAuthorizedError";

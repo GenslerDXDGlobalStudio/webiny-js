@@ -1,6 +1,6 @@
 {
   "name": "@webiny/ui",
-  "version": "4.14.0",
+  "version": "5.0.0-beta.4",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -15,8 +15,11 @@
   "license": "MIT",
   "dependencies": {
     "@babel/runtime": "^7.5.5",
+    "@editorjs/editorjs": "^2.19.1",
     "@emotion/core": "^10.0.17",
     "@emotion/styled": "^10.0.17",
+    "@material/base": "^3.1.0",
+    "@material/textfield": "^3.2.0",
     "@rmwc/base": "^5.6.0",
     "@rmwc/button": "^5.6.0",
     "@rmwc/checkbox": "^5.6.0",
@@ -25,10 +28,14 @@
     "@rmwc/drawer": "^5.6.0",
     "@rmwc/elevation": "^5.6.0",
     "@rmwc/fab": "^5.6.0",
+    "@rmwc/floating-label": "^5.6.0",
     "@rmwc/grid": "^5.6.0",
+    "@rmwc/icon": "^5.6.0",
     "@rmwc/icon-button": "^5.6.0",
+    "@rmwc/line-ripple": "^5.6.0",
     "@rmwc/list": "^5.6.0",
     "@rmwc/menu": "^5.6.0",
+    "@rmwc/notched-outline": "^5.6.0",
     "@rmwc/radio": "^5.6.0",
     "@rmwc/ripple": "^5.6.0",
     "@rmwc/select": "^5.6.0",
@@ -36,8 +43,9 @@
     "@rmwc/snackbar": "^5.6.0",
     "@rmwc/switch": "^5.6.0",
     "@rmwc/tabs": "^5.6.0",
-    "@rmwc/textfield": "^5.6.0",
+    "@rmwc/textfield": "file:./rmwc/textfield",
     "@rmwc/top-app-bar": "^5.6.0",
+    "@rmwc/types": "^5.6.0",
     "@rmwc/typography": "^5.6.0",
     "@svgr/webpack": "^4.3.2",
     "brace": "^0.11.1",
@@ -51,7 +59,7 @@
     "lodash": "^4.17.11",
     "material-components-web": "^3.1.1",
     "nprogress": "^0.2.0",
-    "nuka-carousel": "^4.3.9",
+    "nuka-carousel": "4.7.1",
     "rc-tooltip": "^3.7.2",
     "react-ace": "^6.1.4",
     "react-butterfiles": "^1.3.0",
@@ -60,7 +68,8 @@
     "react-custom-scrollbars": "^4.2.1",
     "react-loading-skeleton": "^0.5.0",
     "react-spinner-material": "1.1.4",
-    "react-transition-group": "^4.3.0"
+    "react-transition-group": "^4.3.0",
+    "shortid": "^2.2.16"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.5",
@@ -72,10 +81,9 @@
     "@storybook/addon-knobs": "^5.0.5",
     "@storybook/addon-links": "^5.0.5",
     "@storybook/react": "^5.2.8",
-    "@webiny/form": "^4.14.0",
-    "@webiny/storybook-utils": "^4.14.0",
-    "@webiny/validation": "^4.14.0",
-    "awesome-typescript-loader": "^5.2.1",
+    "@webiny/form": "^5.0.0-beta.4",
+    "@webiny/storybook-utils": "^5.0.0-beta.4",
+    "@webiny/validation": "^5.0.0-beta.4",
     "babel-loader": "^8.0.0-beta.6",
     "babel-plugin-emotion": "^9.2.8",
     "babel-plugin-named-asset-import": "^1.0.0-next.3e165448",
@@ -84,21 +92,25 @@
     "raw-loader": "^0.5.1",
     "react-docgen": "^5.0.0",
     "react-docgen-typescript-loader": "^3.6.0",
-    "react-testing-library": "^5.2.0",
-    "sass-loader": "^7.1.0"
+    "react-testing-library": "^8.0.1",
+    "regenerator-runtime": "^0.13.2",
+    "rimraf": "^3.0.2",
+    "sass-loader": "^7.1.0",
+    "typescript": "^4.1.3",
+    "webpack": "^4.46.0"
   },
   "peerDependencies": {
-    "react": "^16.8.6",
-    "react-dom": "^16.8.6"
+    "react": "16.14.0",
+    "react-dom": "16.14.0"
   },
   "publishConfig": {
     "access": "public",
     "directory": "dist"
   },
   "scripts": {
-    "build": "rimraf ./dist *.tsbuildinfo && babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\"",
+    "build": "rimraf ./dist '*.tsbuildinfo' && babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" && yarn postbuild",
     "watch": "babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" --watch",
-    "postbuild": "cp package.json LICENSE README.md dist/ && tsc -p tsconfig.build.json",
+    "postbuild": "cp -R rmwc package.json LICENSE README.md dist/ && tsc -p tsconfig.build.json",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook -c .storybook -o ${OUT:-.out}"
   },
@@ -123,5 +135,5 @@
       ]
     }
   },
-  "gitHead": "1c3e8fd44a71306cb449c653725d5d34a9a90e36"
+  "gitHead": "8476da73b653c89cc1474d968baf55c1b0ae0e5f"
 }

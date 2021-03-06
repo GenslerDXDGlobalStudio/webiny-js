@@ -1,6 +1,6 @@
 {
   "name": "@webiny/app",
-  "version": "4.14.0",
+  "version": "5.0.0-beta.4",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -14,22 +14,24 @@
   ],
   "license": "MIT",
   "dependencies": {
+    "@apollo/react-hooks": "^3.1.5",
     "@babel/runtime": "^7.5.5",
-    "@webiny/i18n": "^4.14.0",
-    "@webiny/i18n-react": "^4.14.0",
-    "@webiny/plugins": "^4.14.0",
-    "@webiny/react-router": "^4.14.0",
-    "@webiny/ui": "^4.14.0",
+    "@types/react": "^16.9.56",
+    "@webiny/i18n": "^5.0.0-beta.4",
+    "@webiny/i18n-react": "^5.0.0-beta.4",
+    "@webiny/plugins": "^5.0.0-beta.4",
+    "@webiny/react-router": "^5.0.0-beta.4",
+    "@webiny/ui": "^5.0.0-beta.4",
+    "apollo-cache": "^1.3.5",
     "apollo-client": "^2.6.8",
-    "apollo-link": "^1.2.1",
+    "apollo-link": "^1.2.14",
+    "apollo-link-context": "^1.0.20",
+    "apollo-utilities": "^1.3.4",
     "graphql": "^14.5.8",
-    "graphql-tag": "^2.10.1",
     "invariant": "^2.2.4",
     "lodash": "^4.17.4",
-    "lodash.get": "^4.4.2",
-    "react": "^16.8.6",
-    "react-apollo": "^3.1.3",
-    "react-dom": "^16.6.0",
+    "react": "^16.14.0",
+    "react-dom": "^16.14.0",
     "warning": "^4.0.2"
   },
   "devDependencies": {
@@ -39,14 +41,16 @@
     "@babel/preset-env": "^7.5.5",
     "@babel/preset-react": "^7.0.0",
     "@babel/preset-typescript": "^7.8.3",
-    "babel-plugin-lodash": "^3.3.4"
+    "babel-plugin-lodash": "^3.3.4",
+    "rimraf": "^3.0.2",
+    "typescript": "^4.1.3"
   },
   "publishConfig": {
     "access": "public",
     "directory": "dist"
   },
   "scripts": {
-    "build": "rimraf ./dist *.tsbuildinfo && babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\"",
+    "build": "rimraf ./dist '*.tsbuildinfo' && babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" && yarn postbuild",
     "watch": "babel src -d dist --source-maps --copy-files --extensions \".ts,.tsx\" --watch",
     "postbuild": "cp package.json LICENSE README.md dist/ && tsc -p tsconfig.build.json"
   },
@@ -57,5 +61,5 @@
       ]
     }
   },
-  "gitHead": "1c3e8fd44a71306cb449c653725d5d34a9a90e36"
+  "gitHead": "8476da73b653c89cc1474d968baf55c1b0ae0e5f"
 }

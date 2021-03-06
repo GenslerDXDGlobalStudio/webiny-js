@@ -1,6 +1,6 @@
 export default {
-    type: "form-field-validator-pattern",
-    name: "form-field-validator-pattern-url",
+    type: "fb-form-field-validator-pattern",
+    name: "fb-form-field-validator-pattern-url",
     pattern: {
         name: "url",
         regex:

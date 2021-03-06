@@ -1,112 +1,71 @@
-import React, { useCallback, useEffect } from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import React, { useMemo } from "react";
 import { cloneDeep } from "lodash";
 import { merge } from "dot-prop-immutable";
-import { getPlugins } from "@webiny/plugins";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { UpdateElementActionEvent } from "../../../recoil/actions";
+import { plugins } from "@webiny/plugins";
 import { renderPlugins } from "@webiny/app/plugins";
-import { isPluginActive } from "@webiny/app-page-builder/editor/selectors";
-import { withActiveElement } from "@webiny/app-page-builder/editor/components";
-import { useKeyHandler } from "@webiny/app-page-builder/editor/hooks/useKeyHandler";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { css } from "emotion";
-import {
-    Dialog,
-    DialogContent,
-    DialogActions,
-    DialogButton,
-    DialogCancel,
-    DialogTitle
-} from "@webiny/ui/Dialog";
+import { withActiveElement } from "../../../components";
 import { Form } from "@webiny/form";
-import { Tabs } from "@webiny/ui/Tabs";
-import { updateElement, deactivatePlugin } from "@webiny/app-page-builder/editor/actions";
-import { PbEditorPageElementAdvancedSettingsPlugin } from "@webiny/app-page-builder/types";
+import { PbEditorPageElementAdvancedSettingsPlugin, PbEditorElement } from "../../../../types";
 
 const emptyElement = { data: {}, type: null };
 
-const dialogStyle = css({
-    ".mdc-dialog__surface": {
-        maxWidth: 865
-    },
-    ".webiny-ui-dialog__content": {
-        width: 865,
-        maxHeight: "70vh"
-    }
-});
-
-const AdvancedSettings = props => {
-    const { element, open, deactivatePlugin } = props;
+type AdvancedSettingsPropsType = {
+    element: PbEditorElement;
+};
+const AdvancedSettings: React.FunctionComponent<AdvancedSettingsPropsType> = ({ element }) => {
     const { data, type } = element || cloneDeep(emptyElement);
 
-    const { addKeyHandler, removeKeyHandler } = useKeyHandler();
+    const eventActionHandler = useEventActionHandler();
 
-    const closeDialog = useCallback(() => {
-        deactivatePlugin({ name: "pb-editor-page-element-settings-advanced" });
-    }, []);
+    // Get element settings plugins
+    const advancedSettingsPlugin = useMemo(() => {
+        return plugins
+            .byType<PbEditorPageElementAdvancedSettingsPlugin>(
+                "pb-editor-page-element-advanced-settings"
+            )
+            .filter(pl => pl.elementType === element.type || pl.elementType === "all");
+    }, [element.type]);
 
-    const onSubmit = useHandler(props, ({ element, updateElement }) => (formData: FormData) => {
-        // Get element settings plugins
-        const plugins = getPlugins<PbEditorPageElementAdvancedSettingsPlugin>(
-            "pb-editor-page-element-advanced-settings"
-        ).filter(pl => pl.elementType === element.type);
-
-        formData = plugins.reduce((formData, pl) => {
+    const onSubmit = (formData: FormData) => {
+        formData = advancedSettingsPlugin.reduce((formData, pl) => {
             if (pl.onSave) {
                 return pl.onSave(formData);
             }
             return formData;
         }, formData);
 
-        updateElement({
-            element: merge(element, "data", formData)
-        });
-        closeDialog();
-    });
+        eventActionHandler.trigger(
+            new UpdateElementActionEvent({
+                element: merge(element, "data", formData),
+                history: true
+            })
+        );
+    };
 
-    useEffect(() => {
-        open ? addKeyHandler("escape", closeDialog) : removeKeyHandler("escape");
-    });
+    if (!advancedSettingsPlugin.length) {
+        return null;
+    }
 
     return (
-        <Dialog
-            open={open}
-            onClose={closeDialog}
-            className={dialogStyle}
-            data-testid={"pb-editor-advanced-element-settings-dialog"}
-        >
-            <DialogTitle>Settings</DialogTitle>
-            <Form key={element && element.id} data={data} onSubmit={onSubmit}>
-                {({ submit, Bind, data, form }) => (
-                    <React.Fragment>
-                        <DialogContent>
-                            <Tabs>
-                                {renderPlugins<PbEditorPageElementAdvancedSettingsPlugin>(
-                                    "pb-editor-page-element-advanced-settings",
-                                    { Bind, data, form },
-                                    { wrapper: false, filter: pl => pl.elementType === type }
-                                )}
-                            </Tabs>
-                        </DialogContent>
-                        <DialogActions>
-                            <DialogCancel>Cancel</DialogCancel>
-                            <DialogButton onClick={submit}>Save</DialogButton>
-                        </DialogActions>
-                    </React.Fragment>
-                )}
-            </Form>
-        </Dialog>
+        <Form key={element && element.id} data={data} onSubmit={onSubmit}>
+            {({ submit, Bind, data, form }) => (
+                <>
+                    {renderPlugins<PbEditorPageElementAdvancedSettingsPlugin>(
+                        "pb-editor-page-element-advanced-settings",
+                        { Bind, data, form, submit },
+                        {
+                            wrapper: false,
+                            filter: pl => pl.elementType === type || pl.elementType === "all"
+                        }
+                    )}
+                </>
+            )}
+        </Form>
     );
 };
 
-const withConnect = connect<any, any, any>(
-    state => ({
-        open: isPluginActive("pb-editor-page-element-settings-advanced")(state)
-    }),
-    { updateElement, deactivatePlugin }
-);
+const AdvancedSettingsMemoized = React.memo(AdvancedSettings);
 
-export default withConnect(
-    withActiveElement({ shallow: true })(
-        React.memo(AdvancedSettings, (prev, next) => prev.open === next.open)
-    )
-);
+export default withActiveElement()(AdvancedSettingsMemoized);

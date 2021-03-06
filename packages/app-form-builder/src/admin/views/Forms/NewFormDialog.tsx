@@ -1,11 +1,10 @@
 import React from "react";
 import { css } from "emotion";
 import { useRouter } from "@webiny/react-router";
-import { Mutation } from "react-apollo";
+import { useMutation } from "@apollo/react-hooks";
 import { Form } from "@webiny/form";
 import { Input } from "@webiny/ui/Input";
-import { CREATE_FORM } from "../../viewsGraphql";
-import get from "lodash.get";
+import { CREATE_FORM } from "../../graphql";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
 import { CircularProgress } from "@webiny/ui/Progress";
 
@@ -20,6 +19,7 @@ import {
     DialogOnClose
 } from "@webiny/ui/Dialog";
 import { ButtonDefault } from "@webiny/ui/Button";
+import { addFormToListCache } from "../cache";
 
 const narrowDialog = css({
     ".mdc-dialog__surface": {
@@ -31,13 +31,14 @@ const narrowDialog = css({
 export type NewFormDialogProps = {
     open: boolean;
     onClose: DialogOnClose;
-    formsDataList: any;
 };
 
-const NewFormDialog: React.FC<NewFormDialogProps> = ({ open, onClose, formsDataList }) => {
+const NewFormDialog: React.FC<NewFormDialogProps> = ({ open, onClose }) => {
     const [loading, setLoading] = React.useState(false);
     const { showSnackbar } = useSnackbar();
     const { history } = useRouter();
+
+    const [create] = useMutation(CREATE_FORM);
 
     return (
         <Dialog
@@ -46,46 +47,42 @@ const NewFormDialog: React.FC<NewFormDialogProps> = ({ open, onClose, formsDataL
             className={narrowDialog}
             data-testid="fb-new-form-modal"
         >
-            <Mutation mutation={CREATE_FORM}>
-                {update => (
-                    <Form
-                        onSubmit={async data => {
-                            setLoading(true);
-                            const response = get(
-                                await update({
-                                    variables: data,
-                                    refetchQueries: ["FormsListForms"],
-                                    awaitRefetchQueries: true
-                                }),
-                                "data.forms.form"
-                            );
+            <Form
+                onSubmit={async formData => {
+                    setLoading(true);
 
-                            if (response.error) {
+                    await create({
+                        variables: formData,
+                        update(cache, { data }) {
+                            const { data: revision, error } = data.formBuilder.form;
+
+                            if (error) {
                                 setLoading(false);
-                                return showSnackbar(response.error.message);
+                                return showSnackbar(error.message);
                             }
 
-                            await formsDataList.refresh();
-                            history.push("/forms/" + response.data.id);
-                        }}
-                    >
-                        {({ Bind, submit }) => (
-                            <>
-                                {loading && <CircularProgress />}
-                                <DialogTitle>{t`New form`}</DialogTitle>
-                                <DialogContent>
-                                    <Bind name={"name"}>
-                                        <Input placeholder={"Enter a name for your new form"} />
-                                    </Bind>
-                                </DialogContent>
-                                <DialogActions>
-                                    <ButtonDefault onClick={submit}>+ {t`Create`}</ButtonDefault>
-                                </DialogActions>
-                            </>
-                        )}
-                    </Form>
+                            addFormToListCache(cache, revision);
+
+                            history.push(`/form-builder/forms/${encodeURIComponent(revision.id)}`);
+                        }
+                    });
+                }}
+            >
+                {({ Bind, submit }) => (
+                    <>
+                        {loading && <CircularProgress label={"Creating form..."} />}
+                        <DialogTitle>{t`New form`}</DialogTitle>
+                        <DialogContent>
+                            <Bind name={"name"}>
+                                <Input placeholder={"Enter a name for your new form"} />
+                            </Bind>
+                        </DialogContent>
+                        <DialogActions>
+                            <ButtonDefault onClick={submit}>+ {t`Create`}</ButtonDefault>
+                        </DialogActions>
+                    </>
                 )}
-            </Mutation>
+            </Form>
         </Dialog>
     );
 };

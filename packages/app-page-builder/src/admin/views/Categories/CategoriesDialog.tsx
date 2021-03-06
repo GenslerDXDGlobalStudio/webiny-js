@@ -1,7 +1,7 @@
 import React from "react";
 import { css } from "emotion";
 import { useRouter } from "@webiny/react-router";
-import { Query } from "react-apollo";
+import { Query } from "@apollo/react-components";
 import {
     Dialog,
     DialogTitle,
@@ -17,7 +17,7 @@ import {
     ListItemTextSecondary
 } from "@webiny/ui/List";
 import { ButtonDefault } from "@webiny/ui/Button";
-import { LIST_CATEGORIES_BY_NAME } from "./graphql";
+import { LIST_CATEGORIES } from "./graphql";
 
 const narrowDialog = css({
     ".mdc-dialog__surface": {
@@ -51,7 +51,7 @@ const CategoriesDialog: React.FC<CategoriesDialogProps> = ({
             <DialogTitle>Select a category</DialogTitle>
             <DialogContent>
                 <List twoLine>
-                    <Query query={LIST_CATEGORIES_BY_NAME}>
+                    <Query query={LIST_CATEGORIES}>
                         {({ data, loading }) => {
                             if (loading) {
                                 return <span>Loading categories...</span>;
@@ -59,8 +59,8 @@ const CategoriesDialog: React.FC<CategoriesDialogProps> = ({
 
                             return (
                                 <React.Fragment>
-                                    {data.pageBuilder.categories.data.map(item => (
-                                        <ListItem key={item.id} onClick={() => onSelect(item)}>
+                                    {data?.pageBuilder?.listCategories?.data.map(item => (
+                                        <ListItem key={item.slug} onClick={() => onSelect(item)}>
                                             <ListItemText>
                                                 <ListItemTextPrimary>
                                                     {item.name}

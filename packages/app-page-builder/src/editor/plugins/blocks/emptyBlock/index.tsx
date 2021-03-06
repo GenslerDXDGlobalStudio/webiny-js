@@ -1,22 +1,15 @@
-import * as React from "react";
-import { createBlock, createRow, createColumn } from "@webiny/app-page-builder/editor/utils";
+import React from "react";
 import preview from "./preview.png";
-import { PbEditorBlockPlugin } from "@webiny/app-page-builder/types";
+import { createElement } from "../../../helpers";
+import { PbEditorBlockPlugin } from "../../../../types";
 
 export default {
     name: "pb-editor-block-empty",
     type: "pb-editor-block",
     category: "general",
     title: "Empty block",
-    create(options = {}) {
-        return createBlock({
-            ...options,
-            elements: [
-                createRow({
-                    elements: [createColumn({ data: { width: 100 } })]
-                })
-            ]
-        });
+    create(options = {}, parent) {
+        return createElement("block", options, parent);
     },
     image: {
         meta: {

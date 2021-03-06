@@ -1,17 +1,16 @@
 import React from "react";
+import styled from "@emotion/styled";
 import {
     PbEditorPageElementPlugin,
-    PbEditorPageElementAdvancedSettingsPlugin
-} from "@webiny/app-page-builder/types";
-import { Tab } from "@webiny/ui/Tabs";
+    PbEditorPageElementAdvancedSettingsPlugin,
+    DisplayMode
+} from "../../../../types";
+import { createInitialPerDeviceSettingValue } from "../../elementSettings/elementSettingsUtils";
 import ImagesList from "./ImagesList";
 import ImagesListImagesSettings from "./ImagesListImagesSettings";
 import ImagesListDesignSettings from "./ImagesListDesignSettings";
-import styled from "@emotion/styled";
 
-import { ReactComponent as DesignIcon } from "./icons/round-style-24px.svg";
 import { ReactComponent as ImageGalleryIcon } from "./icons/round-photo_library-24px.svg";
-import { ReactComponent as ImagesIcon } from "@webiny/app-page-builder/admin/assets/round-photo_library-24px.svg";
 
 export default () => {
     const PreviewBox = styled("div")({
@@ -40,7 +39,7 @@ export default () => {
                 }
             },
             settings: ["pb-editor-page-element-settings-delete"],
-            target: ["row", "column"],
+            target: ["cell", "block"],
             onCreate: "open-settings",
             create(options = {}) {
                 return {
@@ -48,14 +47,14 @@ export default () => {
                     data: {
                         component: "mosaic",
                         settings: {
-                            margin: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            },
-                            padding: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            }
+                            margin: createInitialPerDeviceSettingValue(
+                                { all: "0px" },
+                                DisplayMode.DESKTOP
+                            ),
+                            padding: createInitialPerDeviceSettingValue(
+                                { all: "0px" },
+                                DisplayMode.DESKTOP
+                            )
                         }
                     },
                     ...options
@@ -70,11 +69,7 @@ export default () => {
             type: "pb-editor-page-element-advanced-settings",
             elementType: "images-list",
             render(props) {
-                return (
-                    <Tab icon={<ImagesIcon />} label="Images">
-                        <ImagesListImagesSettings {...props} filter />
-                    </Tab>
-                );
+                return <ImagesListImagesSettings {...props} filter />;
             }
         } as PbEditorPageElementAdvancedSettingsPlugin,
         {
@@ -82,11 +77,7 @@ export default () => {
             type: "pb-editor-page-element-advanced-settings",
             elementType: "images-list",
             render(props) {
-                return (
-                    <Tab icon={<DesignIcon />} label="Design">
-                        <ImagesListDesignSettings {...props} />
-                    </Tab>
-                );
+                return <ImagesListDesignSettings {...props} />;
             }
         } as PbEditorPageElementAdvancedSettingsPlugin
     ];

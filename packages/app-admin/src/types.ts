@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Plugin } from "@webiny/plugins/types";
 import { ApolloClient } from "apollo-client";
-import { Menu, Item, Section } from "./plugins/Menu/Navigation/components";
+import { Menu, Item, Section } from "./plugins/menu/Navigation/components";
+import { ReactElement } from "react";
 
 type RenderParams = {
     content: React.ReactNode;
@@ -29,7 +30,7 @@ export type AdminGlobalSearchPreventHotkeyPlugin = Plugin & {
 
 export type AdminDrawerFooterMenuPlugin = Plugin & {
     type: "admin-drawer-footer-menu";
-    render(): React.ReactElement;
+    render(params: any): React.ReactElement;
 };
 
 export type AdminMenuLogoPlugin = Plugin & {
@@ -118,7 +119,8 @@ export type AdminInstallationPlugin = Plugin & {
     render({ onInstalled }): React.ReactNode;
 };
 
-export type ApiInformationDialogPlugin = Plugin & {
-    type: "admin-api-information-dialog";
-    render(): React.ReactNode;
+export type AdminAppPermissionRendererPlugin = Plugin & {
+    type: "admin-app-permissions-renderer";
+    system?: boolean;
+    render(params: any): ReactElement;
 };

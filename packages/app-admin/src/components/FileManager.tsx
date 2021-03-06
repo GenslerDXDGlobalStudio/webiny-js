@@ -6,6 +6,7 @@ import { FileManagerProvider } from "./FileManager/FileManagerContext";
 
 type FileManagerProps = {
     onChange?: Function;
+    onChangePick?: string[];
     images?: boolean;
     multiple?: boolean;
     accept?: Array<string>;
@@ -18,7 +19,7 @@ type FileManagerProps = {
 
 type FileManagerPortalProps = Omit<FileManagerProps, "children">;
 
-const { useState } = React;
+const { useState, useRef, useCallback } = React;
 
 class FileManagerPortal extends React.Component<FileManagerPortalProps> {
     container: Element;
@@ -44,6 +45,7 @@ class FileManagerPortal extends React.Component<FileManagerPortalProps> {
             onChange,
             onClose,
             accept,
+            onChangePick,
             multiple,
             images,
             maxSize,
@@ -55,7 +57,9 @@ class FileManagerPortal extends React.Component<FileManagerPortalProps> {
 
         const props = {
             onChange: files => {
-                const fields = ["id", "name", "key", "src", "size", "type"];
+                const fields = Array.isArray(onChangePick)
+                    ? onChangePick
+                    : ["id", "name", "key", "src", "size", "type"];
                 if (Array.isArray(files)) {
                     onChange(files.map(file => pick(file, fields)));
                 } else {
@@ -86,12 +90,25 @@ class FileManagerPortal extends React.Component<FileManagerPortalProps> {
 
 export function FileManager({ children, ...rest }: FileManagerProps) {
     const [show, setShow] = useState(false);
+    const onChangeRef = useRef(rest.onChange);
+
+    const showFileManager = useCallback(onChange => {
+        if (typeof onChange === "function") {
+            onChangeRef.current = onChange;
+        }
+        setShow(true);
+    }, []);
+
     return (
         <>
-            {show && <FileManagerPortal onClose={() => setShow(false)} {...rest} />}
-            {children({
-                showFileManager: () => setShow(true)
-            })}
+            {show && (
+                <FileManagerPortal
+                    onClose={() => setShow(false)}
+                    {...rest}
+                    onChange={onChangeRef.current}
+                />
+            )}
+            {children({ showFileManager })}
         </>
     );
 }

@@ -14,18 +14,19 @@ import { Icon } from "@webiny/ui/Icon";
 import { MenuItem, Menu, MenuDivider } from "@webiny/ui/Menu";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
 import { Tooltip } from "@webiny/ui/Tooltip";
-import { ReactComponent as MoreVerticalIcon } from "@webiny/app-headless-cms/admin/icons/more_vert.svg";
-import { ReactComponent as LockIcon } from "@webiny/app-headless-cms/admin/icons/lock.svg";
-import { ReactComponent as BeenHereIcon } from "@webiny/app-headless-cms/admin/icons/beenhere.svg";
-import { ReactComponent as GestureIcon } from "@webiny/app-headless-cms/admin/icons/gesture.svg";
-import { ReactComponent as AddIcon } from "@webiny/app-headless-cms/admin/icons/add.svg";
-import { ReactComponent as EditIcon } from "@webiny/app-headless-cms/admin/icons/edit.svg";
-import { ReactComponent as PublishIcon } from "@webiny/app-headless-cms/admin/icons/publish.svg";
-import { ReactComponent as DeleteIcon } from "@webiny/app-headless-cms/admin/icons/delete.svg";
-import { useRouter } from "@webiny/react-router";
-import { CmsEditorContentModel } from "@webiny/app-headless-cms/types";
-import { I18NValue } from "@webiny/app-i18n/components";
+import { ReactComponent as MoreVerticalIcon } from "../../../icons/more_vert.svg";
+import { ReactComponent as LockIcon } from "../../../icons/lock.svg";
+import { ReactComponent as BeenHereIcon } from "../../../icons/beenhere.svg";
+import { ReactComponent as GestureIcon } from "../../../icons/gesture.svg";
+import { ReactComponent as AddIcon } from "../../../icons/add.svg";
+import { ReactComponent as EditIcon } from "../../../icons/edit.svg";
+import { ReactComponent as PublishIcon } from "../../../icons/publish.svg";
+import { ReactComponent as UnpublishIcon } from "../../../icons/unpublish.svg";
+import { ReactComponent as DeleteIcon } from "../../../icons/delete.svg";
+import { CmsEditorContentModel, CmsEditorContentEntry } from "../../../../types";
 import { i18n } from "@webiny/app/i18n";
+import { useRevision } from "./useRevision";
+import usePermission from "../../../hooks/usePermission";
 
 const t = i18n.ns("app-headless-cms/admin/plugins/content-details/content-revisions");
 
@@ -37,14 +38,14 @@ const revisionsMenu = css({
     left: "auto !important"
 });
 
-const getIcon = (rev: CmsEditorContentModel) => {
+const getIcon = (rev: CmsEditorContentEntry) => {
     switch (true) {
-        case rev.meta.locked && !rev.meta.published:
+        case rev.meta.locked && rev.meta.status !== "published":
             return {
                 icon: <Icon icon={<LockIcon />} />,
                 text: "This revision is locked (it has already been published)"
             };
-        case rev.meta.published:
+        case rev.meta.status === "published":
             return {
                 icon: <Icon icon={<BeenHereIcon />} className={primaryColor} />,
                 text: "This revision is currently published!"
@@ -57,11 +58,36 @@ const getIcon = (rev: CmsEditorContentModel) => {
     }
 };
 
-const Revision = props => {
-    const { revision, createContentFrom, deleteContent, publishContent, switchTab } = props;
-    const { icon, text: tooltipText } = getIcon(revision);
+type Props = {
+    revision: CmsEditorContentEntry;
+    setLoading: (loading: boolean) => void;
+    getLoading: () => boolean;
+    entry: CmsEditorContentEntry;
+    refetchContent: () => void;
+    contentModel: CmsEditorContentModel;
+    state: any;
+    setState: (state: any) => void;
+    switchTab: (index: number) => void;
+    listQueryVariables: any;
+};
 
-    const { history } = useRouter();
+const Revision = (props: Props) => {
+    const { revision, setLoading, contentModel, entry, switchTab, listQueryVariables } = props;
+    const {
+        createRevision,
+        deleteRevision,
+        publishRevision,
+        unpublishRevision,
+        editRevision
+    } = useRevision({
+        contentModel,
+        entry,
+        revision,
+        setLoading,
+        listQueryVariables
+    });
+    const { canEdit, canDelete, canPublish, canUnpublish } = usePermission();
+    const { icon, text: tooltipText } = getIcon(revision);
 
     return (
         <ConfirmationDialog
@@ -82,11 +108,9 @@ const Revision = props => {
                         </Tooltip>
                     </ListItemGraphic>
                     <ListItemText>
-                        <ListItemTextPrimary>
-                            <I18NValue value={revision.meta.title} default={t`N/A`} />
-                        </ListItemTextPrimary>
+                        <ListItemTextPrimary>{revision.meta.title || t`N/A`}</ListItemTextPrimary>
                         <ListItemTextSecondary>
-                            {t`Last modified: {time} (#{version})`({
+                            {t`Last modified {time} (#{version})`({
                                 time: <TimeAgo datetime={revision.savedOn} />,
                                 version: revision.meta.version
                             })}
@@ -97,20 +121,19 @@ const Revision = props => {
                             handle={<IconButton icon={<MoreVerticalIcon />} />}
                             className={revisionsMenu}
                         >
-                            <MenuItem onClick={() => createContentFrom(revision)}>
-                                <ListItemGraphic>
-                                    <Icon icon={<AddIcon />} />
-                                </ListItemGraphic>
-                                {t`New from current`}
-                            </MenuItem>
+                            {canEdit(entry, "cms.contentEntry") && (
+                                <MenuItem onClick={createRevision}>
+                                    <ListItemGraphic>
+                                        <Icon icon={<AddIcon />} />
+                                    </ListItemGraphic>
+                                    {t`New from current`}
+                                </MenuItem>
+                            )}
 
-                            {!revision.meta.locked && (
+                            {!revision.meta.locked && canEdit(entry, "cms.contentEntry") && (
                                 <MenuItem
                                     onClick={() => {
-                                        const { id } = revision;
-                                        const query = new URLSearchParams(location.search);
-                                        query.set("id", id);
-                                        history.push({ search: query.toString() });
+                                        editRevision();
                                         switchTab(0);
                                     }}
                                 >
@@ -121,23 +144,30 @@ const Revision = props => {
                                 </MenuItem>
                             )}
 
-                            {!revision.meta.published && (
-                                <MenuItem onClick={() => publishContent(revision)}>
-                                    <ListItemGraphic>
-                                        <Icon icon={<PublishIcon />} />
-                                    </ListItemGraphic>
-                                    {t`Publish`}
-                                </MenuItem>
-                            )}
+                            {revision.meta.status !== "published" &&
+                                canPublish("cms.contentEntry") && (
+                                    <MenuItem onClick={() => publishRevision(revision.id)}>
+                                        <ListItemGraphic>
+                                            <Icon icon={<PublishIcon />} />
+                                        </ListItemGraphic>
+                                        {t`Publish`}
+                                    </MenuItem>
+                                )}
 
-                            {!revision.meta.locked && revision.id !== revision.meta.parent && (
+                            {revision.meta.status === "published" &&
+                                canUnpublish("cms.contentEntry") && (
+                                    <MenuItem onClick={unpublishRevision}>
+                                        <ListItemGraphic>
+                                            <Icon icon={<UnpublishIcon />} />
+                                        </ListItemGraphic>
+                                        {t`Unpublish`}
+                                    </MenuItem>
+                                )}
+
+                            {!revision.meta.locked && canDelete(entry, "cms.contentEntry") && (
                                 <div>
                                     <MenuDivider />
-                                    <MenuItem
-                                        onClick={() =>
-                                            showConfirmation(() => deleteContent(revision))
-                                        }
-                                    >
+                                    <MenuItem onClick={() => showConfirmation(deleteRevision)}>
                                         <ListItemGraphic>
                                             <Icon icon={<DeleteIcon />} />
                                         </ListItemGraphic>

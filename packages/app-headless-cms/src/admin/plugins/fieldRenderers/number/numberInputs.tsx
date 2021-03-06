@@ -1,10 +1,10 @@
 import React from "react";
-import { CmsEditorFieldRendererPlugin } from "@webiny/app-headless-cms/types";
+import get from "lodash/get";
+import { CmsEditorFieldRendererPlugin } from "../../../../types";
 import { Input } from "@webiny/ui/Input";
 import { i18n } from "@webiny/app/i18n";
-import { ReactComponent as DeleteIcon } from "@webiny/app-headless-cms/admin/icons/close.svg";
-import DynamicListMultipleValues from "./../DynamicListMultipleValues";
-import get from "lodash/get";
+import { ReactComponent as DeleteIcon } from "../../../icons/close.svg";
+import DynamicSection from "../DynamicSection";
 
 const t = i18n.ns("app-headless-cms/admin/fields/text");
 
@@ -24,12 +24,11 @@ const plugin: CmsEditorFieldRendererPlugin = {
         },
         render(props) {
             return (
-                <DynamicListMultipleValues {...props}>
+                <DynamicSection {...props}>
                     {({ bind, index }) => (
                         <Input
                             {...bind.index}
                             onChange={value => {
-                                value = parseFloat(value);
                                 return bind.index.onChange(value);
                             }}
                             autoFocus
@@ -39,12 +38,12 @@ const plugin: CmsEditorFieldRendererPlugin = {
                             trailingIcon={
                                 index > 0 && {
                                     icon: <DeleteIcon />,
-                                    onClick: bind.index.removeValue
+                                    onClick: () => bind.field.removeValue(index)
                                 }
                             }
                         />
                     )}
-                </DynamicListMultipleValues>
+                </DynamicSection>
             );
         }
     }

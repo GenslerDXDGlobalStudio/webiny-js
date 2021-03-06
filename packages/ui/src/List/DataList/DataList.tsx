@@ -3,22 +3,30 @@ import styled from "@emotion/styled";
 import classNames from "classnames";
 import Loader from "./Loader";
 import NoData from "./NoData";
-import { Typography } from "@webiny/ui/Typography";
+import { Typography } from "../../Typography";
 import { css } from "emotion";
 import noop from "lodash/noop";
 import isEmpty from "lodash/isEmpty";
 
-import { Checkbox } from "@webiny/ui/Checkbox";
-import { Menu, MenuItem } from "@webiny/ui/Menu";
-import { Grid, Cell } from "@webiny/ui/Grid";
+import { Checkbox } from "../../Checkbox";
+import { Menu, MenuItem } from "../../Menu";
+import { Grid, Cell } from "../../Grid";
 
-import { RefreshIcon, SortIcon, PreviousPageIcon, NextPageIcon, OptionsIcon } from "./icons";
-import { List, ListItem, ListProps } from "@webiny/ui/List";
-
-import { MetaProp, SortersProp } from "./types";
+import {
+    RefreshIcon,
+    SortIcon,
+    FilterIcon,
+    PreviousPageIcon,
+    NextPageIcon,
+    OptionsIcon
+} from "./icons";
+import { List, ListItem, ListProps } from "..";
+import { DataListModalOverlayProvider } from "./DataListModalOverlay";
+import { PaginationProp, SortersProp } from "./types";
 
 const ListContainer = styled("div")({
     position: "relative",
+    height: "100%",
     ".mdc-list": {
         paddingBottom: 0,
         paddingTop: 0
@@ -112,8 +120,14 @@ const listActions = css({
 });
 
 const scrollList = css({
-    overflow: "scroll",
+    overflow: "auto",
     height: "calc(100vh - 235px)"
+});
+
+const dataListContent = css({
+    position: "relative",
+    height: "100%",
+    overflow: "auto"
 });
 
 // This was copied from "./types" so that it can be outputted in docs.
@@ -140,25 +154,10 @@ type Props = {
     noData?: React.ReactNode;
 
     // Provide all pagination data, options and callbacks here.
-    meta?: MetaProp;
-
-    // Triggered when previous page is requested.
-    setPreviousPage?: Function;
-
-    // Triggered when next page is requested.
-    setNextPage?: Function;
+    pagination?: PaginationProp;
 
     // Triggered once a sorter has been selected.
     setSorters?: Function;
-
-    // Triggered once selected filters are submitted.
-    setFilters?: Function;
-
-    // Triggered when number of entries per page has been changed.
-    setPerPage?: Function;
-
-    // By default, users can choose from 10, 25 or 50 entries per page.
-    perPageOptions?: number[];
 
     // Provide all sorters options and callbacks here.
     sorters?: SortersProp;
@@ -166,19 +165,29 @@ type Props = {
     // Provide actions that will be shown in the top right corner (eg. export or import actions).
     actions?: React.ReactNode;
 
+    // Provide filters that will be shown in the top left corner (eg. filter by category or status).
+    filters?: React.ReactNode;
+
     // Provide actions that can be executed on one or more multi-selected list items (eg. export or delete).
     multiSelectActions?: React.ReactNode;
 
     // Provide callback that will be executed once user selects all list items.
-    multiSelectAll: (value: boolean) => void;
+    multiSelectAll?: (value: boolean) => void;
 
     // Callback which returns true if all items were selected, otherwise returns false.
-    isAllMultiSelected: () => boolean;
+    isAllMultiSelected?: () => boolean;
 
     // Callback which returns true if none of the items were selected, otherwise returns false.
-    isNoneMultiSelected: () => boolean;
+    isNoneMultiSelected?: () => boolean;
 
-    showOptions: { [key: string]: any };
+    showOptions?: { [key: string]: any };
+
+    // Provide search UI that will be shown in the top left corner.
+    search?: React.ReactElement;
+    // Provide simple modal UI that will be shown over the list content.
+    modalOverlay?: React.ReactElement;
+    // Provide an action element that handle toggling the "Modal overlay".
+    modalOverlayAction?: React.ReactElement;
 };
 
 const MultiSelectAll = (props: Props) => {
@@ -252,25 +261,38 @@ const Sorters = (props: Props) => {
     );
 };
 
+const Filters = (props: Props) => {
+    const filters = props.filters;
+    if (!filters) {
+        return null;
+    }
+
+    return (
+        <ListHeaderItem>
+            <Menu handle={<FilterIcon />}>{filters}</Menu>
+        </ListHeaderItem>
+    );
+};
+
 const Pagination = (props: Props) => {
-    const meta = props.meta;
-    if (!meta) {
+    const { pagination } = props;
+    if (!pagination) {
         return null;
     }
 
     return (
         <React.Fragment>
-            {props.setPreviousPage && props.setNextPage && (
+            {pagination.setNextPage && (
                 <React.Fragment>
                     <ListHeaderItem
                         className={classNames({
-                            disabled: !meta.hasPreviousPage
+                            disabled: !pagination.hasPreviousPage
                         })}
                     >
                         <PreviousPageIcon
                             onClick={() => {
-                                if (props.setPreviousPage && meta.hasPreviousPage) {
-                                    props.setPreviousPage(meta.cursors.previous);
+                                if (pagination.setPreviousPage && pagination.hasPreviousPage) {
+                                    pagination.setPreviousPage();
                                 }
                             }}
                         />
@@ -278,13 +300,13 @@ const Pagination = (props: Props) => {
 
                     <ListHeaderItem
                         className={classNames({
-                            disabled: !meta.hasNextPage
+                            disabled: !pagination.hasNextPage
                         })}
                     >
                         <NextPageIcon
                             onClick={() => {
-                                if (props.setNextPage && meta.hasNextPage) {
-                                    props.setNextPage(meta.cursors.next);
+                                if (pagination.setNextPage && pagination.hasNextPage) {
+                                    pagination.setNextPage();
                                 }
                             }}
                         />
@@ -292,14 +314,16 @@ const Pagination = (props: Props) => {
                 </React.Fragment>
             )}
 
-            {props.setPerPage && Array.isArray(props.perPageOptions) && (
+            {Array.isArray(pagination.perPageOptions) && pagination.setPerPage && (
                 <ListHeaderItem>
                     <Menu handle={<OptionsIcon />}>
-                        {props.setPerPage &&
-                            props.perPageOptions.map(perPage => (
+                        {pagination.setPerPage &&
+                            pagination.perPageOptions.map(perPage => (
                                 <MenuItem
                                     key={perPage}
-                                    onClick={() => props.setPerPage && props.setPerPage(perPage)}
+                                    onClick={() =>
+                                        pagination.setPerPage && pagination.setPerPage(perPage)
+                                    }
                                 >
                                     {perPage}
                                 </MenuItem>
@@ -311,52 +335,62 @@ const Pagination = (props: Props) => {
     );
 };
 
+const Search = (props: Props) => {
+    if (!props.search) {
+        return null;
+    }
+    return <Cell span={7}>{React.cloneElement(props.search, props)}</Cell>;
+};
+
 export const DataList = (props: Props) => {
     let render = null;
+    const renderChildren = typeof props.children === "function" ? props.children(props) : null;
+
     if (props.loading) {
         render = props.loader;
+    } else if (isEmpty(props.data)) {
+        render = props.noData;
     } else {
-        if (isEmpty(props.data)) {
-            render = props.noData;
-        } else {
-            if (typeof props.children === "function") {
-                render = props.children(props);
-            }
-        }
+        render = renderChildren;
     }
 
     return (
-        <ListContainer className={"webiny-data-list"}>
-            {(props.title || props.actions) && (
-                <Grid className={listHeader}>
-                    <Cell span={6} className={listTitle}>
-                        <Typography use="headline5">{props.title}</Typography>
-                    </Cell>
-                    <Cell span={6} className={listActions}>
-                        {props.actions}
-                    </Cell>
-                </Grid>
-            )}
-
-            {Object.keys(props.showOptions).length > 0 && (
-                <Grid className={listSubHeader}>
-                    <Cell span={props.showOptions.pagination ? 5 : 12}>
-                        <MultiSelectAll {...props} />
-                        {props.showOptions.refresh && <RefreshButton {...props} />}
-                        {props.showOptions.sorters && <Sorters {...props} />}
-                        <MultiSelectActions {...props} />
-                    </Cell>
-
-                    {props.showOptions.pagination && (
-                        <Cell span={7} style={{ textAlign: "right" }}>
-                            <Pagination {...props} />
+        <DataListModalOverlayProvider>
+            <ListContainer className={"webiny-data-list"}>
+                {(props.title || props.actions) && (
+                    <Grid className={listHeader}>
+                        <Cell span={6} className={listTitle}>
+                            <Typography use="headline5">{props.title}</Typography>
                         </Cell>
-                    )}
-                </Grid>
-            )}
+                        <Cell span={6} className={listActions}>
+                            {props.actions}
+                        </Cell>
+                    </Grid>
+                )}
 
-            {render}
-        </ListContainer>
+                {Object.keys(props.showOptions).length > 0 && (
+                    <Grid className={listSubHeader}>
+                        <Search {...props} />
+                        <Cell span={props.search ? 5 : 12} style={{ justifySelf: "end" }}>
+                            <MultiSelectAll {...props} />
+                            {props.showOptions.refresh && <RefreshButton {...props} />}
+                            {props.showOptions.pagination && <Pagination {...props} />}
+                            {props.showOptions.sorters && <Sorters {...props} />}
+                            {props.showOptions.filters && <Filters {...props} />}
+                            {props.modalOverlayAction ? (
+                                <ListHeaderItem>{props.modalOverlayAction}</ListHeaderItem>
+                            ) : null}
+                            <MultiSelectActions {...props} />
+                        </Cell>
+                    </Grid>
+                )}
+
+                <div className={classNames(dataListContent, "webiny-data-list__content")}>
+                    {render}
+                    {props.modalOverlay}
+                </div>
+            </ListContainer>
+        </DataListModalOverlayProvider>
     );
 };
 
@@ -370,6 +404,7 @@ DataList.defaultProps = {
     setPage: null,
     setPerPage: null,
     perPageOptions: [10, 25, 50],
+    filters: null,
     sorters: null,
     setSorters: null,
     actions: null,
@@ -381,7 +416,8 @@ DataList.defaultProps = {
     showOptions: {
         refresh: true,
         pagination: true,
-        sorters: true
+        sorters: true,
+        filters: true
     }
 };
 

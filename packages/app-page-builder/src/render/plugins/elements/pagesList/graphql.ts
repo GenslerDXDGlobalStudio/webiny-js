@@ -1,56 +1,51 @@
 import gql from "graphql-tag";
 
-export const loadPages = gql`
+export const LIST_PUBLISHED_PAGES = gql`
     query ListPublishedPages(
-        $category: String
-        $sort: PbPageSortInput
-        $tags: [String]
-        $tagsRule: PbTagsRule
+        $where: PbListPublishedPagesWhereInput
+        $sort: PbListPagesSortInput
         $limit: Int
-        $after: String
-        $before: String
+        $page: Int
+        $exclude: [String]
     ) {
         pageBuilder {
             listPublishedPages(
-                category: $category
+                where: $where
                 sort: $sort
-                tags: $tags
-                tagsRule: $tagsRule
                 limit: $limit
-                after: $after
-                before: $before
+                page: $page
+                exclude: $exclude
             ) {
                 data {
                     id
                     title
+                    path
                     url
-                    fullUrl
                     snippet
-                    publishedOn
-                    settings {
+                    tags
+                    images {
                         general {
-                            image {
-                                src
-                            }
+                            src
                         }
                     }
+                    publishedOn
                     createdBy {
-                        firstName
-                        lastName
+                        id
+                        displayName
                     }
                     category {
-                        id
+                        slug
                         name
                     }
                 }
                 meta {
-                    cursors {
-                        next
-                        previous
-                    }
-                    hasNextPage
-                    hasPreviousPage
+                    from
+                    to
+                    page
+                    nextPage
+                    previousPage
                     totalCount
+                    totalPages
                 }
             }
         }

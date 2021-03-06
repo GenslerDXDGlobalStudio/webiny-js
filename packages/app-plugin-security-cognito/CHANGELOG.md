@@ -3,6 +3,235 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [5.0.0-beta.4](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.3...v5.0.0-beta.4) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.3](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.2...v5.0.0-beta.3) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.2](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.1...v5.0.0-beta.2) (2021-01-29)
+
+
+### Bug Fixes
+
+* remove console.log ([6f6d99f](https://github.com/webiny/webiny-js/commit/6f6d99fbce7fdb8295bd3842e4f14d180cdbd911))
+* **admin:** import user menu items individually ([6d82fae](https://github.com/webiny/webiny-js/commit/6d82fae7599b022b63d16fbd615d5b5b4abbbb7d))
+* **app-plugin-security-cognito:** do not overwrite Authorization header if already set ([e4ef4ab](https://github.com/webiny/webiny-js/commit/e4ef4ab3b250cd3210b0fced5b090916b1726a2b))
+* **app-plugin-security-cognito:** headers variable is undefined ([#1370](https://github.com/webiny/webiny-js/issues/1370)) ([fb6de1b](https://github.com/webiny/webiny-js/commit/fb6de1ba0d0e90a393e292f7ae9bed370fa495ce))
+* **security:** always convert username to lower case ([8f81455](https://github.com/webiny/webiny-js/commit/8f8145574b474701435d17314bd5c95e1c47eef5))
+
+
+
+
+
+# [5.0.0-beta.1](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.0...v5.0.0-beta.1) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.0](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.0) (2021-01-08)
+
+
+### Bug Fixes
+
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* revert to React 16.14.0 ([db2c17d](https://github.com/webiny/webiny-js/commit/db2c17df8dbcd33ce8518c9edcdc5db911571dd1))
+* update dependencies ([9e23d9d](https://github.com/webiny/webiny-js/commit/9e23d9d435c8e3993713d73123a7b93119893eb1))
+* update references to user-management ([7275a4b](https://github.com/webiny/webiny-js/commit/7275a4b24968d661b37096141f8f471d0a907404))
+* **code-format:** update configs for prettier and eslint ([#1237](https://github.com/webiny/webiny-js/issues/1237)) ([5ff6d22](https://github.com/webiny/webiny-js/commit/5ff6d22f427093a52560963770dadf96d8e6685b))
+* update version of @webiny/packages ([4a02033](https://github.com/webiny/webiny-js/commit/4a02033bb47bd902631dba2634a141c1b060fde5))
+
+
+### Features
+
+* migrate security to v5 ([d8f2b76](https://github.com/webiny/webiny-js/commit/d8f2b76738de99772a5285b9ceae1f5969f793ed))
+* **app-page-builder:** switch redux for recoil ([a1c5f18](https://github.com/webiny/webiny-js/commit/a1c5f18e271d27a6e65a912014de66dc048741a9))
+* add default `getIdentityData` function ([67fd505](https://github.com/webiny/webiny-js/commit/67fd505055262241928155827dd96e77f6e9bd45))
+
+
+
+
+
+# [5.0.0-beta.52](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.51...v5.0.0-beta.52) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.51](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.50...v5.0.0-beta.51) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.50](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.49...v5.0.0-beta.50) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.49](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.48...v5.0.0-beta.49) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.48](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.47...v5.0.0-beta.48) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.47](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.46...v5.0.0-beta.47) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.46](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.45...v5.0.0-beta.46) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.45](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.44...v5.0.0-beta.45) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.44](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.43...v5.0.0-beta.44) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.36](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.35...v5.0.0-beta.36) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.35](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.34...v5.0.0-beta.35) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.34](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.33...v5.0.0-beta.34) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.33](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.32...v5.0.0-beta.33) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.32](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.31...v5.0.0-beta.32) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.31](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.30...v5.0.0-beta.31) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.30](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.29...v5.0.0-beta.30) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.29](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.28...v5.0.0-beta.29) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.28](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.27...v5.0.0-beta.28) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/app-plugin-security-cognito
+
+
+
+
+
+# [5.0.0-beta.10](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.10) (2021-01-04)
+
+
+### Bug Fixes
+
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* revert to React 16.14.0 ([db2c17d](https://github.com/webiny/webiny-js/commit/db2c17df8dbcd33ce8518c9edcdc5db911571dd1))
+* update dependencies ([9e23d9d](https://github.com/webiny/webiny-js/commit/9e23d9d435c8e3993713d73123a7b93119893eb1))
+* update references to user-management ([7275a4b](https://github.com/webiny/webiny-js/commit/7275a4b24968d661b37096141f8f471d0a907404))
+* **code-format:** update configs for prettier and eslint ([#1237](https://github.com/webiny/webiny-js/issues/1237)) ([5ff6d22](https://github.com/webiny/webiny-js/commit/5ff6d22f427093a52560963770dadf96d8e6685b))
+* update version of @webiny/packages ([4a02033](https://github.com/webiny/webiny-js/commit/4a02033bb47bd902631dba2634a141c1b060fde5))
+
+
+### Features
+
+* migrate security to v5 ([d8f2b76](https://github.com/webiny/webiny-js/commit/d8f2b76738de99772a5285b9ceae1f5969f793ed))
+* **app-page-builder:** switch redux for recoil ([a1c5f18](https://github.com/webiny/webiny-js/commit/a1c5f18e271d27a6e65a912014de66dc048741a9))
+* add default `getIdentityData` function ([67fd505](https://github.com/webiny/webiny-js/commit/67fd505055262241928155827dd96e77f6e9bd45))
+
+
+
+
+
 # [4.14.0](https://github.com/webiny/webiny-js/compare/v4.14.0-beta.1...v4.14.0) (2020-10-30)
 
 **Note:** Version bump only for package @webiny/app-plugin-security-cognito

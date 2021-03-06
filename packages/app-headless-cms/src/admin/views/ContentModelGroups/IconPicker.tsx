@@ -1,13 +1,13 @@
 import * as React from "react";
 import { css } from "emotion";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { Typography } from "@webiny/ui/Typography";
 import { Grid } from "react-virtualized";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import DelayedOnChange from "./DelayedOnChange";
 import { Menu } from "@webiny/ui/Menu";
 import { Input } from "@webiny/ui/Input";
-import { CmsIcon, CmsIconsPlugin } from "@webiny/app-headless-cms/types";
+import { CmsIcon, CmsIconsPlugin } from "../../../types";
 import { FormComponentProps } from "@webiny/ui/types";
 import { FormElementMessage } from "@webiny/ui/FormElementMessage";
 
@@ -109,8 +109,8 @@ const IconPicker = ({
     );
 
     const allIcons: CmsIcon[] = useMemo(() => {
-        const plugins = getPlugins<CmsIconsPlugin>("cms-icons");
-        return plugins.reduce((icons: Array<CmsIcon>, pl) => {
+        const iconPlugins = plugins.byType<CmsIconsPlugin>("cms-icons");
+        return iconPlugins.reduce((icons: Array<CmsIcon>, pl) => {
             return icons.concat(pl.getIcons());
         }, []);
     }, []);

@@ -1,64 +1,32 @@
-import React, { useCallback } from "react";
-import { useApolloClient } from "react-apollo";
+import React, { useMemo } from "react";
 import { SplitView, LeftPanel, RightPanel } from "@webiny/app-admin/components/SplitView";
-import { FloatingActionButton } from "@webiny/app-admin/components/FloatingActionButton";
-import { CrudProvider } from "@webiny/app-admin/contexts/Crud";
+import { useSecurity } from "@webiny/app-security";
 import CategoriesDataList from "./CategoriesDataList";
 import CategoriesForm from "./CategoriesForm";
 
-import {
-    READ_CATEGORY,
-    LIST_CATEGORIES,
-    LIST_CATEGORIES_BY_NAME,
-    CREATE_CATEGORY,
-    UPDATE_CATEGORY,
-    DELETE_CATEGORY
-} from "./graphql";
-
 const Categories = () => {
-    const client = useApolloClient();
+    const { identity } = useSecurity();
+    const pbMenuPermission = useMemo(() => {
+        return identity.getPermission("pb.category");
+    }, []);
 
-    const onCompleted = useCallback(async () => {
-        await client.query({
-            query: LIST_CATEGORIES_BY_NAME,
-            fetchPolicy: "network-only"
-        });
+    const canCreate = useMemo(() => {
+        if (typeof pbMenuPermission.rwd === "string") {
+            return pbMenuPermission.rwd.includes("w");
+        }
+
+        return true;
     }, []);
 
     return (
-        <CrudProvider
-            delete={{
-                mutation: DELETE_CATEGORY,
-                options: { onCompleted }
-            }}
-            read={READ_CATEGORY}
-            create={{
-                mutation: CREATE_CATEGORY,
-                options: { onCompleted }
-            }}
-            update={{
-                mutation: UPDATE_CATEGORY,
-                options: { onCompleted }
-            }}
-            list={{
-                query: LIST_CATEGORIES,
-                variables: { sort: { savedOn: -1 } }
-            }}
-        >
-            {({ actions }) => (
-                <>
-                    <SplitView>
-                        <LeftPanel>
-                            <CategoriesDataList />
-                        </LeftPanel>
-                        <RightPanel>
-                            <CategoriesForm />
-                        </RightPanel>
-                    </SplitView>
-                    <FloatingActionButton onClick={actions.resetForm} />
-                </>
-            )}
-        </CrudProvider>
+        <SplitView>
+            <LeftPanel>
+                <CategoriesDataList canCreate={canCreate} />
+            </LeftPanel>
+            <RightPanel>
+                <CategoriesForm canCreate={canCreate} />
+            </RightPanel>
+        </SplitView>
     );
 };
 

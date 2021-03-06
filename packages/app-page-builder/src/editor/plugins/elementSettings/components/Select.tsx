@@ -1,11 +1,11 @@
-import * as React from "react";
-import { connect } from "react-redux";
+import React from "react";
+import { activeElementAtom, elementWithChildrenByIdSelector } from "../../../recoil/modules";
 import { get } from "lodash";
 import { Typography } from "@webiny/ui/Typography";
 import { Grid, Cell } from "@webiny/ui/Grid";
 import { Select as SelectCmp } from "@webiny/ui/Select";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
 import { css } from "emotion";
+import { useRecoilValue } from "recoil";
 
 const selectStyle = css({
     select: {
@@ -16,23 +16,39 @@ const selectStyle = css({
 
 type SelectProps = {
     label: string;
-    value: string;
+    value?: string;
+    valueKey?: string;
+    defaultValue?: string;
     updateValue: (value: any) => void;
     options?: Array<string>;
+    disabled?: boolean;
     // One or more <option> or <optgroup> elements.
     children?: Array<React.ReactElement<"option"> | React.ReactElement<"optgroup">>;
+    className?: string;
 };
 
-const Select = ({ label, value, updateValue, options, children }: SelectProps) => {
+const Select = ({
+    label,
+    value,
+    valueKey,
+    defaultValue,
+    updateValue,
+    options,
+    children,
+    className
+}: SelectProps) => {
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementWithChildrenByIdSelector(activeElementId));
+    const keyValue = valueKey ? get(element, valueKey, defaultValue) : value;
     return (
-        <Grid>
+        <Grid className={className}>
             <Cell span={4}>
                 <Typography use={"overline"}>{label}</Typography>
             </Cell>
             <Cell span={8}>
                 <SelectCmp
                     className={selectStyle}
-                    value={value}
+                    value={keyValue}
                     onChange={updateValue}
                     options={options}
                 >
@@ -43,8 +59,4 @@ const Select = ({ label, value, updateValue, options, children }: SelectProps) =
     );
 };
 
-export default connect<any, any, any>((state, { value, valueKey, defaultValue }: any) => {
-    return {
-        value: valueKey ? get(getActiveElement(state), valueKey, defaultValue) : value
-    };
-})(React.memo(Select));
+export default React.memo(Select);

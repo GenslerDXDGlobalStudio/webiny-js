@@ -1,5 +1,11 @@
 import React from "react";
-import { get } from "lodash";
+import {
+    PbEditorBarPlugin,
+    PbEditorDefaultBarLeftPlugin,
+    PbEditorDefaultBarRightPageOptionsPlugin,
+    PbEditorDefaultBarRightPlugin,
+    PbEditorDefaultBarCenterPlugin
+} from "../../../types";
 import PageSettings from "./components/PageSettings";
 import PageSettingsButton from "./components/PageSettingsButton";
 import PublishPageButton from "./components/PublishPageButton";
@@ -10,20 +16,18 @@ import Divider from "./components/Divider";
 import Title from "./components/Title";
 import BackButton from "./components/BackButton";
 import Revisions from "./components/Revisions";
-import {
-    PbEditorBarPlugin,
-    PbEditorDefaultBarLeftPlugin,
-    PbEditorDefaultBarRightPageOptionsPlugin,
-    PbEditorDefaultBarRightPlugin
-} from "@webiny/app-page-builder/types";
+import EditorResponsiveBar from "./components/EditorResponsiveBar";
 
 export default [
     {
         name: "pb-editor-page-settings-bar",
         type: "pb-editor-bar",
         shouldRender({ plugins }) {
-            const active = get(plugins, "pb-editor-bar");
-            return active ? active.find(pl => pl.name === "pb-editor-page-settings-bar") : false;
+            const active = plugins["pb-editor-bar"];
+            if (!active || active.length === 0) {
+                return false;
+            }
+            return active.find(pl => pl.name === "pb-editor-page-settings-bar");
         },
         render() {
             return <PageSettings />;
@@ -100,5 +104,12 @@ export default [
         render() {
             return <Title />;
         }
-    } as PbEditorDefaultBarLeftPlugin
+    } as PbEditorDefaultBarLeftPlugin,
+    {
+        name: "pb-editor-default-bar-center-editor-mode",
+        type: "pb-editor-default-bar-center",
+        render() {
+            return <EditorResponsiveBar />;
+        }
+    } as PbEditorDefaultBarCenterPlugin
 ];

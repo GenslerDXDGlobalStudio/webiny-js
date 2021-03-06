@@ -1,21 +1,19 @@
 import * as React from "react";
 import { Route } from "@webiny/react-router";
 import { AdminLayout } from "@webiny/app-admin/components/AdminLayout";
-import PageBuilderSettings from "./components/PageBuilderSettings";
-import GeneralSettings from "./components/generalSettings/GeneralSettings";
+import PrerenderingSettings from "./components/prerenderingSettings/PrerenderingSettings";
+import WebsiteSettings from "./components/websiteSettings/WebsiteSettings";
 import { SecureRoute, SecureView } from "@webiny/app-security/components";
 import { i18n } from "@webiny/app/i18n";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import Helmet from "react-helmet";
-import { PbMenuSettingsItemPlugin } from "@webiny/app-page-builder/types";
+import { PbMenuSettingsItemPlugin } from "../../../types";
 import { RoutePlugin } from "@webiny/app/types";
 import { AdminMenuSettingsPlugin } from "@webiny/app-admin/types";
 
 const t = i18n.ns("app-page-builder/admin/menus");
 
-const ROLE_PB_SETTINGS = ["pb:settings"];
-
-const plugins = [
+const allPlugins = [
     {
         type: "route",
         name: "route-settings-website",
@@ -25,8 +23,8 @@ const plugins = [
                 render={() => (
                     <AdminLayout>
                         <Helmet title={t`Page Builder - Website Settings`} />
-                        <SecureRoute scopes={ROLE_PB_SETTINGS}>
-                            <PageBuilderSettings />
+                        <SecureRoute permission={"pb.settings"}>
+                            <WebsiteSettings />
                         </SecureRoute>
                     </AdminLayout>
                 )}
@@ -35,15 +33,15 @@ const plugins = [
     } as RoutePlugin,
     {
         type: "route",
-        name: "route-settings-general",
+        name: "route-settings-prerendering",
         route: (
             <Route
-                path="/settings/page-builder/general"
+                path="/settings/page-builder/prerendering"
                 render={() => (
                     <AdminLayout>
-                        <Helmet title={t`Page Builder - General Settings`} />
-                        <SecureRoute scopes={ROLE_PB_SETTINGS}>
-                            <GeneralSettings />
+                        <Helmet title={t`Page Builder - Prerendering Settings`} />
+                        <SecureRoute permission={"pb.settings"}>
+                            <PrerenderingSettings />
                         </SecureRoute>
                     </AdminLayout>
                 )}
@@ -55,15 +53,15 @@ const plugins = [
         name: "menu-settings-page-builder",
         render({ Section, Item }) {
             return (
-                <SecureView scopes={ROLE_PB_SETTINGS}>
+                <SecureView permission={"pb.settings"}>
                     <Section label={t`Page Builder`}>
-                        {getPlugins<PbMenuSettingsItemPlugin>("menu-settings-page-builder").map(
-                            plugin => (
+                        {plugins
+                            .byType<PbMenuSettingsItemPlugin>("menu-settings-page-builder")
+                            .map(plugin => (
                                 <React.Fragment key={plugin.name + new Date()}>
                                     {plugin.render({ Item })}
                                 </React.Fragment>
-                            )
-                        )}
+                            ))}
                     </Section>
                 </SecureView>
             );
@@ -71,18 +69,18 @@ const plugins = [
     } as AdminMenuSettingsPlugin,
     {
         type: "menu-settings-page-builder",
-        name: "menu-settings-website",
+        name: "menu-settings-general",
         render({ Item }) {
             return <Item label={t`Website`} path={"/settings/page-builder/website"} />;
         }
     } as PbMenuSettingsItemPlugin,
     {
         type: "menu-settings-page-builder",
-        name: "menu-settings-general",
+        name: "menu-settings-prerendering",
         render({ Item }) {
-            return <Item label={t`General`} path={"/settings/page-builder/general"} />;
+            return <Item label={t`Prerendering`} path={"/settings/page-builder/prerendering"} />;
         }
     } as PbMenuSettingsItemPlugin
 ];
 
-export default plugins;
+export default allPlugins;

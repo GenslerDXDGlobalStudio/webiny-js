@@ -1,1 +1,1 @@
-module.exports = require("../../.babel.node");
+module.exports = require("RELATIVE_ROOT_PATH/.babel.node");

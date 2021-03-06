@@ -345,13 +345,20 @@ module.exports = function(webpackEnv, { paths, babelCustomizer }) {
                             options: {
                                 cache: true,
                                 formatter: require.resolve("react-dev-utils/eslintFormatter"),
-                                eslintPath: require.resolve("eslint"),
-                                resolvePluginsRelativeTo: __dirname
+                                eslintPath: require.resolve("eslint")
                             },
                             loader: require.resolve("eslint-loader")
                         }
                     ],
-                    include: paths.appSrc
+                    //include: paths.appSrc
+                    include: file => {
+                        if (file.includes("dist")) {
+                            return false;
+                        }
+
+                        return paths.allWorkspaces.some(p => file.includes(p));
+                    },
+                    exclude: /node_modules/
                 },
                 {
                     // "oneOf" will traverse all following loaders until one will
@@ -373,9 +380,10 @@ module.exports = function(webpackEnv, { paths, babelCustomizer }) {
                         // The preset includes JSX, Flow, TypeScript, and some ESnext features.
                         {
                             test: /\.(js|mjs|jsx|ts|tsx)$/,
-                            include: [paths.appSrc, paths.appIndexJs],
+                            include: [paths.appSrc, paths.appIndexJs, ...paths.allWorkspaces],
                             loader: require.resolve("babel-loader"),
                             options: babelCustomizer({
+                                sourceType: "unambiguous",
                                 presets: [require.resolve("babel-preset-react-app")],
                                 plugins: [
                                     [
@@ -409,6 +417,7 @@ module.exports = function(webpackEnv, { paths, babelCustomizer }) {
                                 babelrc: false,
                                 configFile: false,
                                 compact: false,
+                                sourceType: "unambiguous",
                                 presets: [
                                     [
                                         require.resolve("babel-preset-react-app/dependencies"),

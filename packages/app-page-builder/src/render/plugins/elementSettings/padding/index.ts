@@ -1,5 +1,15 @@
 import { get } from "lodash";
-import { PbRenderElementStylePlugin } from "@webiny/app-page-builder/types";
+import kebabCase from "lodash/kebabCase";
+import { PbRenderElementStylePlugin } from "../../../../types";
+import { applyPerDeviceStyleWithFallback } from "../../../utils";
+
+const validateSpacingValue = value => {
+    const parsedValue = parseInt(value);
+    if (Number.isNaN(parsedValue)) {
+        return "0px";
+    }
+    return value;
+};
 
 export default {
     name: "pb-render-page-element-style-padding",
@@ -7,16 +17,20 @@ export default {
     renderStyle({ element, style }) {
         const { padding } = get(element, "data.settings", {});
 
-        if (!padding) {
-            return style;
-        }
-
-        const adv = padding.advanced;
-        const { desktop = {}, mobile = {} } = padding;
-
+        // Set per side padding value
         ["top", "right", "bottom", "left"].forEach(side => {
-            style[`--desktop-padding-${side}`] = ((adv ? desktop[side] : desktop.all) || 0) + "px";
-            style[`--mobile-padding-${side}`] = ((adv ? mobile[side] : mobile.all) || 0) + "px";
+            // Set per-device property value
+            applyPerDeviceStyleWithFallback(({ displayMode, fallbackMode }) => {
+                const fallbackPaddingValue = get(
+                    style,
+                    `--${kebabCase(fallbackMode)}-padding-${side}`
+                );
+                const adv = get(padding, `${displayMode}.advanced`, false);
+                const value = adv
+                    ? get(padding, `${displayMode}.${side}`, fallbackPaddingValue)
+                    : get(padding, `${displayMode}.all`, fallbackPaddingValue);
+                style[`--${kebabCase(displayMode)}-padding-${side}`] = validateSpacingValue(value);
+            });
         });
 
         return style;

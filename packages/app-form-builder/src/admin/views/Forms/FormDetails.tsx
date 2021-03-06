@@ -1,33 +1,22 @@
 import React from "react";
-import { Query } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { renderPlugins } from "@webiny/app/plugins";
 import { useRouter } from "@webiny/react-router";
 import styled from "@emotion/styled";
-import { Elevation } from "@webiny/ui/Elevation";
-import { GET_FORM } from "@webiny/app-form-builder/admin/viewsGraphql";
+import { GET_FORM, GET_FORM_REVISIONS } from "../../graphql";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { get } from "lodash";
 import { Tabs } from "@webiny/ui/Tabs";
+import { CircularProgress } from "@webiny/ui/Progress";
+import { ButtonDefault, ButtonIcon } from "@webiny/ui/Button";
+import { useSecurity } from "@webiny/app-security";
+import EmptyView from "@webiny/app-admin/components/EmptyView";
+import { ReactComponent as AddIcon } from "@webiny/app-admin/assets/icons/add-18px.svg";
+import { i18n } from "@webiny/app/i18n";
 
-const EmptySelect = styled("div")({
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "var(--mdc-theme-on-surface)",
-    ".select-form": {
-        maxWidth: 400,
-        padding: "50px 100px",
-        textAlign: "center",
-        display: "block",
-        borderRadius: 2,
-        backgroundColor: "var(--mdc-theme-surface)"
-    }
-});
+const t = i18n.ns("app-form-builder/admin/views/forms/form-details");
 
 const DetailsContainer = styled("div")({
-    height: "calc(100% - 10px)",
+    height: "100%",
     overflow: "hidden",
     position: "relative",
     nav: {
@@ -35,60 +24,91 @@ const DetailsContainer = styled("div")({
     }
 });
 
-const EmptyFormDetails = () => {
+type EmptyFormDetailsProps = {
+    onCreateForm: () => void;
+    canCreate: boolean;
+};
+const EmptyFormDetails = ({ canCreate, onCreateForm }: EmptyFormDetailsProps) => {
     return (
-        <EmptySelect>
-            <Elevation z={2} className={"select-form"}>
-                Select a form on the left side, or click the green button to create a new one.
-            </Elevation>
-        </EmptySelect>
+        <EmptyView
+            title={t`Click on the left side list to display form details {message}`({
+                message: canCreate ? " or create a..." : ""
+            })}
+            action={
+                canCreate ? (
+                    <ButtonDefault data-testid="new-record-button" onClick={onCreateForm}>
+                        <ButtonIcon icon={<AddIcon />} /> {t`New Form`}
+                    </ButtonDefault>
+                ) : null
+            }
+        />
     );
 };
 
 export type FormDetailsProps = {
     refreshForms: () => void;
+    onCreateForm: () => void;
+    canCreate: boolean;
 };
 
-const FormDetails = ({ refreshForms }: FormDetailsProps) => {
+const FormDetails = ({ refreshForms, onCreateForm, canCreate }: FormDetailsProps) => {
     const { location, history } = useRouter();
     const { showSnackbar } = useSnackbar();
-    const query = new URLSearchParams(location.search);
+    const security = useSecurity();
+    const query = new URLSearchParams(location.search + location.hash);
     const formId = query.get("id");
 
+    const getForm = useQuery(GET_FORM, {
+        variables: {
+            revision: formId
+        },
+        skip: !formId,
+        onCompleted: data => {
+            if (!data) {
+                return;
+            }
+
+            const { error, data: formData } = data.formBuilder.form;
+            if (error) {
+                query.delete("id");
+                history.push({ search: query.toString() });
+                showSnackbar(error.message);
+            }
+            if (!formData) {
+                query.delete("id");
+                history.push({ search: query.toString() });
+                showSnackbar(t`Could not load form with given ID.`);
+            }
+        }
+    });
+
+    const getRevisions = useQuery(GET_FORM_REVISIONS, {
+        variables: {
+            id: formId ? formId.split("#")[0] : null
+        },
+        skip: !formId
+    });
+
     if (!formId) {
-        return <EmptyFormDetails />;
+        return <EmptyFormDetails canCreate={canCreate} onCreateForm={onCreateForm} />;
     }
 
+    const form = getForm.loading ? null : getForm.data.formBuilder.form.data;
+    const revisions = getRevisions.loading ? [] : getRevisions.data.formBuilder.revisions.data;
+
     return (
-        <Query
-            query={GET_FORM}
-            variables={{ id: formId }}
-            onCompleted={data => {
-                const error = get(data, "forms.form.error.message");
-                if (error) {
-                    query.delete("id");
-                    history.push({ search: query.toString() });
-                    showSnackbar(error);
-                }
-            }}
-        >
-            {({ data, loading }) => {
-                const form = get(data, "forms.form.data") || null;
-                return (
-                    <DetailsContainer>
-                        {form && (
-                            <Tabs>
-                                {renderPlugins(
-                                    "forms-form-details-revision-content",
-                                    { refreshForms, form, loading },
-                                    { wrapper: false }
-                                )}
-                            </Tabs>
-                        )}
-                    </DetailsContainer>
-                );
-            }}
-        </Query>
+        <DetailsContainer>
+            {getForm.loading && <CircularProgress label={"Loading details..."} />}
+            {form && (
+                <Tabs>
+                    {renderPlugins(
+                        "forms-form-details-revision-content",
+                        { security, refreshForms, form, revisions, loading: getForm.loading },
+                        { wrapper: false }
+                    )}
+                </Tabs>
+            )}
+        </DetailsContainer>
     );
 };
 

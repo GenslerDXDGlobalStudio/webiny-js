@@ -1,22 +1,15 @@
-import gql from "graphql-tag";
-import { GraphQLSchemaPlugin } from "@webiny/graphql/types";
-import {
-    CmsContentModel,
-    CmsModelFieldToGraphQLPlugin,
-    CmsFieldTypePlugins,
-    CmsContext
-} from "@webiny/api-headless-cms/types";
+import { GraphQLSchemaPlugin } from "@webiny/handler-graphql/types";
+import { CmsModelFieldToGraphQLPlugin, CmsFieldTypePlugins, CmsContext } from "../../../types";
 import { createManageSDL } from "./createManageSDL";
 import { createReadSDL } from "./createReadSDL";
 import { createManageResolvers } from "./createManageResolvers";
 import { createReadResolvers } from "./createReadResolvers";
+import { createPreviewResolvers } from "./createPreviewResolvers";
 import { getSchemaFromFieldPlugins } from "../utils/getSchemaFromFieldPlugins";
 
-export interface GenerateSchemaPlugins {
-    (params: { context: CmsContext }): Promise<void>;
-}
-
-export const generateSchemaPlugins: GenerateSchemaPlugins = async ({ context }) => {
+export const generateSchemaPlugins = async (
+    context: CmsContext
+): Promise<GraphQLSchemaPlugin<CmsContext>[]> => {
     const { plugins, cms } = context;
 
     // Structure plugins for faster access
@@ -28,13 +21,12 @@ export const generateSchemaPlugins: GenerateSchemaPlugins = async ({ context }) 
         }, {});
 
     // Load model data
-    const { CmsContentModel } = context.models;
 
-    const models: CmsContentModel[] = await CmsContentModel.find();
+    const models = await cms.models.noAuth().list();
 
     const schemas = getSchemaFromFieldPlugins({ fieldTypePlugins, type: cms.type });
 
-    const newPlugins: GraphQLSchemaPlugin[] = schemas.map((s, i) => ({
+    const newPlugins: GraphQLSchemaPlugin<CmsContext>[] = schemas.map((s, i) => ({
         name: "graphql-schema-cms-field-types-" + i,
         type: "graphql-schema",
         schema: {
@@ -52,9 +44,7 @@ export const generateSchemaPlugins: GenerateSchemaPlugins = async ({ context }) 
                         name: "graphql-schema-" + model.modelId + "-manage",
                         type: "graphql-schema",
                         schema: {
-                            typeDefs: gql`
-                                ${createManageSDL({ model, context, fieldTypePlugins })}
-                            `,
+                            typeDefs: createManageSDL({ model, fieldTypePlugins }),
                             resolvers: createManageResolvers({
                                 models,
                                 model,
@@ -71,15 +61,20 @@ export const generateSchemaPlugins: GenerateSchemaPlugins = async ({ context }) 
                         name: "graphql-schema-" + model.modelId + "-read",
                         type: "graphql-schema",
                         schema: {
-                            typeDefs: gql`
-                                ${createReadSDL({ model, context, fieldTypePlugins })}
-                            `,
-                            resolvers: createReadResolvers({
-                                models,
-                                model,
-                                fieldTypePlugins,
-                                context
-                            })
+                            typeDefs: createReadSDL({ model, fieldTypePlugins }),
+                            resolvers: cms.READ
+                                ? createReadResolvers({
+                                      models,
+                                      model,
+                                      fieldTypePlugins,
+                                      context
+                                  })
+                                : createPreviewResolvers({
+                                      models,
+                                      model,
+                                      fieldTypePlugins,
+                                      context
+                                  })
                         }
                     });
                     break;
@@ -88,5 +83,5 @@ export const generateSchemaPlugins: GenerateSchemaPlugins = async ({ context }) 
             }
         });
 
-    plugins.register(newPlugins);
+    return newPlugins;
 };

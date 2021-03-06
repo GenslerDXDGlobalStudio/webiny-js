@@ -2,7 +2,7 @@ import * as React from "react";
 import GeneralSettings from "./components/GeneralSettings";
 import SeoSettings from "./components/SeoSettings";
 import SocialSettings from "./components/SocialSettings";
-import { PbEditorPageSettingsPlugin } from "@webiny/app-page-builder/types";
+import { PbEditorPageSettingsPlugin } from "../../../types";
 import { ReactComponent as SettingsIcon } from "./icons/round-settings-24px.svg";
 import { ReactComponent as SocialIcon } from "./icons/round-thumb_up-24px.svg";
 import { ReactComponent as SeoIcon } from "./icons/round-search-24px.svg";
@@ -12,7 +12,7 @@ const plugins: PbEditorPageSettingsPlugin[] = [
         name: "pb-editor-page-settings-general",
         type: "pb-editor-page-settings",
         title: "General settings",
-        description: "Manage things like title, page status,url and more.",
+        description: "Manage things like title, page status, path, and more.",
         icon: <SettingsIcon />,
         fields: `
             general {
@@ -52,7 +52,7 @@ const plugins: PbEditorPageSettingsPlugin[] = [
         name: "pb-editor-page-settings-social",
         type: "pb-editor-page-settings",
         title: "Social media",
-        description: "Set share images and settings for social media sites.",
+        description: "Set share images and settings for social media websites.",
         icon: <SocialIcon />,
         fields: `
             social {

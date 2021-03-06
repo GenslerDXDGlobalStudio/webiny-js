@@ -9,7 +9,7 @@ const listWrapper = css({
     margin: 25,
     display: "flex",
     flexDirection: "column",
-    overflow: "scroll",
+    overflow: "auto",
     maxHeight: "calc(100vh - 160px)",
     ".mdc-list .mdc-list-item": {
         borderBottom: "1px solid var(--mdc-theme-on-background)"
@@ -19,15 +19,15 @@ const listWrapper = css({
     }
 });
 
-const RevisionsList = ({ form, loading }) => {
+const RevisionsList = ({ form, revisions, loading }) => {
     return (
         form && (
             <Elevation className={listWrapper} z={2}>
                 <div style={{ position: "relative" }}>
                     {loading && <CircularProgress />}
                     <List nonInteractive twoLine>
-                        {Array.isArray(form.revisions)
-                            ? form.revisions.map(rev => (
+                        {Array.isArray(revisions)
+                            ? revisions.map(rev => (
                                   <Revision form={form} revision={rev} key={rev.id} />
                               ))
                             : null}

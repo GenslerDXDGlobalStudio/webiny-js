@@ -1,38 +1,33 @@
 import React from "react";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { getPlugins } from "@webiny/plugins";
-import { set } from "dot-prop-immutable";
-import { redux } from "@webiny/app-page-builder/editor/redux";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
-import { cloneElement } from "@webiny/app-page-builder/editor/utils";
-import {
-    getElementWithChildren,
-    getParentElementWithChildren
-} from "@webiny/app-page-builder/editor/selectors";
-import { PbEditorPageElementPlugin } from "@webiny/app-page-builder/types";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { activeElementAtom, elementByIdSelector } from "../../../recoil/modules";
+import { plugins } from "@webiny/plugins";
+import { PbEditorPageElementPlugin, PbEditorElement } from "../../../../types";
+import { useRecoilValue } from "recoil";
+import { CloneElementActionEvent } from "../../../recoil/actions/cloneElement";
 
-const CloneAction = props => {
-    const { element, children } = props;
+type CloneActionPropsType = {
+    children: React.ReactElement;
+};
+const CloneAction: React.FunctionComponent<CloneActionPropsType> = ({ children }) => {
+    const eventActionHandler = useEventActionHandler();
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element: PbEditorElement = useRecoilValue(elementByIdSelector(activeElementId));
 
-    const onClick = useHandler(props, ({ element, updateElement }) => () => {
-        const state = redux.store.getState();
-        element = getElementWithChildren(state, element.id);
-        const parent = getParentElementWithChildren(state, element.id);
-        const position = parent.elements.findIndex(el => el.id === element.id) + 1;
+    if (!element) {
+        return null;
+    }
+    const onClick = () => {
+        eventActionHandler.trigger(
+            new CloneElementActionEvent({
+                element
+            })
+        );
+    };
 
-        const newElement = set(parent, "elements", [
-            ...parent.elements.slice(0, position),
-            cloneElement(element),
-            ...(position < parent.elements.length ? parent.elements.slice(position) : [])
-        ]);
-        updateElement({ element: newElement });
-    });
-
-    const plugin = getPlugins<PbEditorPageElementPlugin>("pb-editor-page-element").find(
-        pl => pl.elementType === element.type
-    );
+    const plugin = plugins
+        .byType<PbEditorPageElementPlugin>("pb-editor-page-element")
+        .find(pl => pl.elementType === element.type);
 
     if (!plugin) {
         return null;
@@ -40,7 +35,4 @@ const CloneAction = props => {
 
     return React.cloneElement(children, { onClick });
 };
-
-export default connect<any, any, any>(state => ({ element: getActiveElement(state) }), {
-    updateElement
-})(CloneAction);
+export default React.memo(CloneAction);

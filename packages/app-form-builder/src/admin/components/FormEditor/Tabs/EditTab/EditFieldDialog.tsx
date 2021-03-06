@@ -11,16 +11,15 @@ import {
     DialogButton
 } from "@webiny/ui/Dialog";
 import { Form } from "@webiny/form";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { Tabs, Tab } from "@webiny/ui/Tabs";
 import GeneralTab from "./EditFieldDialog/GeneralTab";
 import ValidatorsTab from "./EditFieldDialog/ValidatorsTab";
 import FieldTypeSelector from "./EditFieldDialog/FieldTypeSelector";
 import { i18n } from "@webiny/app/i18n";
 const t = i18n.namespace("FormEditor.EditFieldDialog");
-import { useFormEditor } from "@webiny/app-form-builder/admin/components/FormEditor/Context";
-import { useI18N } from "@webiny/app-i18n/hooks/useI18N";
-import { FbBuilderFieldPlugin, FbFormModelField } from "@webiny/app-form-builder/types";
+import { useFormEditor } from "../../Context";
+import { FbBuilderFieldPlugin, FbFormModelField } from "../../../../../types";
 
 const dialogBody = css({
     "&.webiny-ui-dialog__content": {
@@ -46,11 +45,10 @@ type EditFieldDialogProps = {
 
 const EditFieldDialog = ({ field, onSubmit, ...props }: EditFieldDialogProps) => {
     const [current, setCurrent] = useState(null);
-    const [isNewField, setIsNewField] = useState(false);
-    const [screen, setScreen] = useState();
+    const [isNewField, setIsNewField] = useState<boolean>(false);
+    const [screen, setScreen] = useState<string>();
 
     const { getFieldPlugin } = useFormEditor();
-    const i18n = useI18N();
 
     useEffect(() => {
         setCurrent(cloneDeep(field));
@@ -121,16 +119,15 @@ const EditFieldDialog = ({ field, onSubmit, ...props }: EditFieldDialogProps) =>
                     <>
                         <DialogContent className={dialogBody}>
                             <FbFormModelFieldList>
-                                {getPlugins<FbBuilderFieldPlugin>("form-editor-field-type")
+                                {plugins
+                                    .byType<FbBuilderFieldPlugin>("form-editor-field-type")
                                     .filter(pl => !pl.field.group)
                                     .map(pl => (
                                         <FieldTypeSelector
                                             key={pl.name}
                                             fieldType={pl.field}
                                             onClick={() => {
-                                                const newCurrent: any = pl.field.createField({
-                                                    i18n
-                                                });
+                                                const newCurrent: any = pl.field.createField();
                                                 if (current) {
                                                     // User edited existing field, that's why we still want to
                                                     // keep a couple of previous values.

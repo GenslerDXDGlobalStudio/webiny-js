@@ -2,7 +2,8 @@ import React, { useCallback, useEffect } from "react";
 import { css } from "emotion";
 import { isEqual } from "lodash";
 import { get } from "lodash";
-import { PbShallowElement } from "@webiny/app-page-builder/types";
+import { PbEditorElement } from "../../../../../types";
+import useRenderEmptyEmbed from "../../../elements/utils/oembed/useRenderEmptyEmbed";
 
 declare global {
     interface Window {
@@ -50,14 +51,14 @@ const getHTML = data => {
 };
 
 export default React.memo(
-    (props: { element: PbShallowElement }) => {
+    (props: { element: PbEditorElement }) => {
         const { element } = props;
 
         useEffect(() => {
             appendSDK(props).then(() => initEmbed(props));
         }, [element]);
 
-        const empty = <div>You must configure your embed in the settings!</div>;
+        const renderEmpty = useRenderEmptyEmbed(element);
 
         const renderEmbed = useCallback(() => {
             const data = get(element, "data.source");
@@ -72,7 +73,7 @@ export default React.memo(
 
         const { url } = get(element, "data.source") || {};
 
-        return url ? renderEmbed() : empty;
+        return url ? renderEmbed() : renderEmpty();
     },
     (props, nextProps) => isEqual(props, nextProps)
 );

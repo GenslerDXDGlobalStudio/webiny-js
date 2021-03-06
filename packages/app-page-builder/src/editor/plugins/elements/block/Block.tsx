@@ -1,8 +1,9 @@
 import React from "react";
-import styled from "@emotion/styled";
-import { ElementRoot } from "@webiny/app-page-builder/render/components/ElementRoot";
 import BlockContainer from "./BlockContainer";
-import ElementAnimation from "@webiny/app-page-builder/render/components/ElementAnimation";
+import ElementAnimation from "../../../../render/components/ElementAnimation";
+import styled from "@emotion/styled";
+import { PbEditorElement } from "../../../../types";
+import { ElementRoot } from "../../../../render/components/ElementRoot";
 
 const BlockStyle = styled("div")({
     position: "relative",
@@ -10,12 +11,14 @@ const BlockStyle = styled("div")({
     padding: 5,
     boxSizing: "border-box"
 });
-
-const Block = ({ element }) => {
+type BlockType = {
+    element: PbEditorElement;
+};
+const Block: React.FunctionComponent<BlockType> = ({ element }) => {
     const { id } = element;
 
     return (
-        <BlockStyle id={id} style={{ zIndex: 20, position: "relative" }}>
+        <BlockStyle id={id} style={{ position: "relative" }}>
             <ElementAnimation>
                 <ElementRoot element={element}>
                     {({ elementStyle, elementAttributes, customClasses, combineClassNames }) => (

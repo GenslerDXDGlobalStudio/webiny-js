@@ -1,64 +1,86 @@
-import React, { useMemo, useCallback } from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { set } from "dot-prop-immutable";
-import { get } from "lodash";
-import { Tabs, Tab } from "@webiny/ui/Tabs";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
-import Input from "@webiny/app-page-builder/editor/plugins/elementSettings/components/Input";
-import { ReactComponent as ImageIcon } from "./round-image-24px.svg";
+import React, { useCallback } from "react";
+import { useRecoilValue } from "recoil";
+import { css } from "emotion";
+// Components
+import Accordion from "../../elementSettings/components/Accordion";
+import Wrapper from "../../elementSettings/components/Wrapper";
+import InputField from "../../elementSettings/components/InputField";
+import SpacingPicker from "../../elementSettings/components/SpacingPicker";
+import useUpdateHandlers from "../../elementSettings/useUpdateHandlers";
+import { justifySelfEndStyle } from "../../elementSettings/components/StyledComponents";
+import { PbEditorPageElementSettingsRenderComponentProps } from "../../../../types";
+import { activeElementAtom, elementByIdSelector } from "../../../recoil/modules";
 
-const ImageSettings = ({ element, updateElement }) => {
-    const { image = {} } = get(element, "data", {});
+import {
+    WIDTH_UNIT_OPTIONS,
+    HEIGHT_UNIT_OPTIONS
+} from "../../elementSettings/elementSettingsUtils";
 
-    const setData = useMemo(() => {
-        const historyUpdated = {};
-
-        return (name, value) => {
-            const attrKey = `data.image.${name}`;
-            const newElement = set(element, attrKey, value);
-
-            if (historyUpdated[name] !== value) {
-                historyUpdated[name] = value;
-                updateElement({ element: newElement });
-            }
-        };
-    }, [element, updateElement]);
-
-    const updateTitle = useCallback(value => setData("title", value), [setData]);
-    const updateWidth = useCallback(value => setData("width", value), [setData]);
-    const updateHeight = useCallback(value => setData("height", value), [setData]);
-
-    return (
-        <Tabs>
-            <Tab icon={<ImageIcon />} label="Image">
-                <Input
-                    label="Title"
-                    value={image.title || ""}
-                    updateValue={updateTitle}
-                    inputWidth={"max-content"}
-                />
-                <Input
-                    label="Width"
-                    placeholder="auto"
-                    description="eg. 300 or 50%"
-                    value={image.width || ""}
-                    updateValue={updateWidth}
-                    inputWidth={80}
-                />
-                <Input
-                    label="Height"
-                    placeholder="auto"
-                    description="eg. 300 or 50%"
-                    value={image.height || ""}
-                    updateValue={updateHeight}
-                    inputWidth={80}
-                />
-            </Tab>
-        </Tabs>
-    );
+const classes = {
+    grid: css({
+        "&.mdc-layout-grid": {
+            padding: 0,
+            marginBottom: 24
+        }
+    })
 };
 
-export default connect<any, any, any>(state => ({ element: getActiveElement(state) }), {
-    updateElement
-})(ImageSettings);
+const spacingPickerStyle = css({
+    width: "120px",
+    "& .inner-wrapper": {
+        display: "flex"
+    }
+});
+
+const ImageSettings: React.FunctionComponent<PbEditorPageElementSettingsRenderComponentProps> = ({
+    defaultAccordionValue = false
+}) => {
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementByIdSelector(activeElementId));
+    const {
+        data: { image }
+    } = element;
+
+    const { getUpdateValue } = useUpdateHandlers({ element, dataNamespace: "data.image" });
+
+    const updateTitle = useCallback(value => getUpdateValue("title")(value), []);
+    const updateWidth = useCallback(value => getUpdateValue("width")(value), []);
+    const updateHeight = useCallback(value => getUpdateValue("height")(value), []);
+
+    return (
+        <Accordion title={"Image"} defaultValue={defaultAccordionValue}>
+            <>
+                <Wrapper containerClassName={classes.grid} label={"Title"}>
+                    <InputField value={image?.title || ""} onChange={updateTitle} />
+                </Wrapper>
+                <Wrapper
+                    containerClassName={classes.grid}
+                    label={"Width"}
+                    rightCellClassName={justifySelfEndStyle}
+                >
+                    <SpacingPicker
+                        value={image?.width || ""}
+                        onChange={updateWidth}
+                        options={WIDTH_UNIT_OPTIONS}
+                        useDefaultStyle={false}
+                        className={spacingPickerStyle}
+                    />
+                </Wrapper>
+                <Wrapper
+                    containerClassName={classes.grid}
+                    label={"Height"}
+                    rightCellClassName={justifySelfEndStyle}
+                >
+                    <SpacingPicker
+                        value={image?.height || ""}
+                        onChange={updateHeight}
+                        options={HEIGHT_UNIT_OPTIONS}
+                        useDefaultStyle={false}
+                        className={spacingPickerStyle}
+                    />
+                </Wrapper>
+            </>
+        </Accordion>
+    );
+};
+export default React.memo(ImageSettings);

@@ -1,9 +1,9 @@
 import * as React from "react";
 import Downshift from "downshift";
-import { Input } from "@webiny/ui/Input";
+import { Input } from "../Input";
 import classNames from "classnames";
-import { Elevation } from "@webiny/ui/Elevation";
-import { Typography } from "@webiny/ui/Typography";
+import { Elevation } from "../Elevation";
+import { Typography } from "../Typography";
 import keycode from "keycode";
 import { autoCompleteStyle, suggestionList } from "./styles";
 import { AutoCompleteBaseProps } from "./types";
@@ -22,7 +22,7 @@ export enum Placement {
     bottom = "bottom"
 }
 
-export type AutoCompleteProps = AutoCompleteBaseProps & {
+export type Props = AutoCompleteBaseProps & {
     /* Placement position of dropdown menu, can be either `top` or `bottom`. */
     placement?: Placement;
 
@@ -38,14 +38,10 @@ type State = {
 };
 
 function Spinner() {
-    if (process.env.REACT_APP_ENV === "ssr") {
-        return null;
-    }
-
     return <MaterialSpinner size={24} spinnerColor={"#fa5723"} spinnerWidth={2} visible />;
 }
 
-class AutoComplete extends React.Component<AutoCompleteProps, State> {
+class AutoComplete extends React.Component<Props, State> {
     static defaultProps = {
         valueProp: "id",
         textProp: "name",
@@ -178,6 +174,7 @@ class AutoComplete extends React.Component<AutoCompleteProps, State> {
 
     render() {
         const {
+            className,
             options,
             onChange,
             value, // eslint-disable-line
@@ -199,39 +196,43 @@ class AutoComplete extends React.Component<AutoCompleteProps, State> {
                     return;
                 }
                 onChange(getOptionValue(selection, this.props), selection);
+                this.setState(state => ({
+                    ...state,
+                    inputValue: ""
+                }));
             }
         };
 
         return (
-            <div className={autoCompleteStyle}>
+            <div className={classNames(autoCompleteStyle, className)}>
                 <Downshift {...downshiftProps} ref={this.downshift}>
                     {({ getInputProps, openMenu, ...rest }) => (
                         <div>
                             <Input
                                 {...getInputProps({
+                                    // This prop is above `otherInputProps` since it can be overridden by the user.
+                                    trailingIcon: this.props.loading && <Spinner />,
                                     ...otherInputProps,
                                     // @ts-ignore
                                     validation,
                                     rawOnChange: true,
-                                    trailingIcon: this.props.loading && <Spinner />,
-                                    onChange: e => e,
-                                    onBlur: e => e,
-                                    onFocus: e => {
+                                    onChange: ev => ev,
+                                    onBlur: ev => ev,
+                                    onFocus: ev => {
                                         openMenu();
-                                        otherInputProps.onFocus && otherInputProps.onFocus(e);
+                                        otherInputProps.onFocus && otherInputProps.onFocus(ev);
                                     },
-                                    onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
-                                        // @ts-ignore
-                                        const keyCode = keycode(e);
+                                    onKeyDown: (ev: React.KeyboardEvent<HTMLInputElement>) => {
+                                        const keyCode: string = keycode((ev as unknown) as Event);
 
                                         if (keyCode === "backspace") {
                                             onChange(null);
+                                            setTimeout(() => openMenu(), 50);
                                         }
                                     },
-                                    onKeyUp: (e: React.KeyboardEvent<HTMLElement>) => {
-                                        // @ts-ignore
-                                        const keyCode = keycode(e);
-                                        const target: any = e.target;
+                                    onKeyUp: (ev: React.KeyboardEvent<HTMLInputElement>) => {
+                                        const keyCode: string = keycode((ev as unknown) as Event);
+                                        const target = ev.currentTarget;
                                         const inputValue = target.value || "";
 
                                         // If user pressed 'esc', 'enter' or similar...
@@ -256,7 +257,9 @@ class AutoComplete extends React.Component<AutoCompleteProps, State> {
                                     }
                                 })}
                             />
-                            {this.renderOptions({ ...rest, options, placement })}
+                            {!otherInputProps.disabled &&
+                                !otherInputProps.readOnly &&
+                                this.renderOptions({ ...rest, options, placement })}
                         </div>
                     )}
                 </Downshift>

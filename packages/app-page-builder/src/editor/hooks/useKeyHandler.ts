@@ -1,26 +1,33 @@
 import React, { SyntheticEvent } from "react";
-import shortid from "shortid";
 import isHotkey from "is-hotkey";
+import { getNanoid } from "../helpers";
 const keyStack = {};
 
 let listener = false;
 const filter = ["TEXTAREA", "INPUT"];
 
+const isContentEditable = (value: any) => {
+    return ["true", true].includes(value);
+};
+
+type KeyboardTargetEventType = KeyboardEvent & {
+    target: HTMLElement;
+};
 const setupListener = () => {
     if (!listener && document.body) {
-        document.body.addEventListener("keydown", (e: KeyboardEvent) => {
-            // We ignore all keyboard events coming from within `slateEditor` element and inputs.
-            // @ts-ignore
-            if (e.srcElement.dataset.slateEditor || filter.includes(e.srcElement.nodeName)) {
+        document.body.addEventListener("keydown", (ev: KeyboardTargetEventType) => {
+            const target = ev.target;
+            // We ignore all keyboard events coming from within contentEditable element and inputs.
+            if (filter.includes(target.nodeName) || isContentEditable(target.contentEditable)) {
                 return;
             }
 
-            const matchedKey = Object.keys(keyStack).find(key => isHotkey(key, e));
+            const matchedKey = Object.keys(keyStack).find(key => isHotkey(key, ev));
 
             if (matchedKey && keyStack[matchedKey].length > 0) {
                 const item = keyStack[matchedKey][0];
-                item.handler(e);
-                e.stopPropagation();
+                item.handler(ev);
+                ev.stopPropagation();
             }
         });
 
@@ -59,7 +66,7 @@ export function useKeyHandler(): {
     addKeyHandler: AddKeyHandlerType;
     removeKeyHandler: RemoveKeyHandlerType;
 } {
-    const [id] = React.useState(shortid.generate());
+    const [id] = React.useState(getNanoid());
 
     return React.useMemo(
         () => ({

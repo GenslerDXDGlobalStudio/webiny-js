@@ -1,12 +1,12 @@
 import * as React from "react";
-import { usePageBuilder } from "@webiny/app-page-builder/hooks/usePageBuilder";
-import { getPlugins } from "@webiny/plugins";
-import { PbPageElementImagesListComponentPlugin } from "@webiny/app-page-builder/types";
+import { usePageBuilder } from "../../../../hooks/usePageBuilder";
+import { plugins } from "@webiny/plugins";
+import { PbPageElementImagesListComponentPlugin } from "../../../../types";
 
 const ImagesList = ({ data }) => {
     const { theme } = usePageBuilder();
     const { component, images } = data;
-    const components = getPlugins<PbPageElementImagesListComponentPlugin>(
+    const components = plugins.byType<PbPageElementImagesListComponentPlugin>(
         "pb-page-element-images-list-component"
     );
     const imageList = components.find(cmp => cmp.componentName === component);

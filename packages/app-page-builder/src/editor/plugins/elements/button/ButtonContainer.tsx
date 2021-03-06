@@ -1,38 +1,80 @@
-import React from "react";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { set } from "dot-prop-immutable";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getElement } from "@webiny/app-page-builder/editor/selectors";
-import ConnectedSlate from "@webiny/app-page-builder/editor/components/ConnectedSlate";
+import React, { CSSProperties, useCallback, useRef } from "react";
+import { useRecoilValue } from "recoil";
+import { css } from "emotion";
+import classNames from "classnames";
+import kebabCase from "lodash/kebabCase";
+import merge from "lodash/merge";
+import set from "lodash/set";
+import { PbEditorElement } from "../../../../types";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { UpdateElementActionEvent } from "../../../recoil/actions";
+import { elementByIdSelector, uiAtom } from "../../../recoil/modules";
+import SimpleEditableText from "./SimpleEditableText";
 
-const excludePlugins = [
-    "pb-editor-slate-menu-item-link",
-    "pb-editor-slate-menu-item-align",
-    "pb-editor-slate-menu-item-ordered-list",
-    "pb-editor-slate-menu-item-unordered-list",
-    "pb-editor-slate-menu-item-code",
-    "pb-editor-slate-editor-align",
-    "pb-editor-slate-editor-lists",
-    "pb-editor-slate-editor-link"
-];
+const buttonEditStyle = css({
+    "&.button__content--empty": {
+        minWidth: 64,
+        lineHeight: "20px",
+        marginTop: "-3px",
+        marginBottom: "-3px"
+    }
+});
 
-const ButtonContainer = props => {
-    const { getAllClasses, elementStyle, elementAttributes, element } = props;
-    const { type = "default", icon = {} } = element.data || {};
-    const { alignItems } = elementStyle;
+const DATA_NAMESPACE = "data.buttonText";
+type ButtonContainerPropsType = {
+    getAllClasses: (...classes: string[]) => string;
+    elementStyle: CSSProperties;
+    elementAttributes: { [key: string]: string };
+    elementId: string;
+};
+const ButtonContainer: React.FunctionComponent<ButtonContainerPropsType> = ({
+    getAllClasses,
+    elementStyle,
+    elementAttributes,
+    elementId
+}) => {
+    const eventActionHandler = useEventActionHandler();
+    const uiAtomValue = useRecoilValue(uiAtom);
+    const element = useRecoilValue(elementByIdSelector(elementId));
+    const { type = "default", icon = {}, buttonText } = element.data || {};
+    const defaultValue = typeof buttonText === "string" ? buttonText : "Click me";
+    const value = useRef<string>(defaultValue);
 
     const { svg = null, position = "left" } = icon || {};
+    // Use per-device style
+    const justifyContent = elementStyle[`--${kebabCase(uiAtomValue.displayMode)}-justify-content`];
 
-    const onChange = useHandler(props, ({ element, updateElement }) => (value: string) => {
-        updateElement({ element: set(element, "data.text", value) });
-    });
+    const onChange = useCallback(
+        (received: string) => {
+            value.current = received;
+        },
+        [element.id]
+    );
+
+    const onBlur = useCallback(() => {
+        if (value.current === defaultValue) {
+            return;
+        }
+
+        const newElement: PbEditorElement = merge(
+            {},
+            element,
+            set({ elements: [] }, DATA_NAMESPACE, value.current)
+        );
+
+        eventActionHandler.trigger(
+            new UpdateElementActionEvent({
+                element: newElement,
+                history: true
+            })
+        );
+    }, [elementId, element.data]);
 
     return (
         <div
             style={{
                 display: "flex",
-                justifyContent: alignItems
+                justifyContent
             }}
         >
             <a
@@ -46,17 +88,17 @@ const ButtonContainer = props => {
                 )}
             >
                 {svg && <span dangerouslySetInnerHTML={{ __html: svg }} />}
-                <ConnectedSlate
-                    elementId={element.id}
+                <SimpleEditableText
+                    className={classNames(buttonEditStyle, {
+                        "button__content--empty": !value.current
+                    })}
+                    value={value.current}
                     onChange={onChange}
-                    exclude={excludePlugins}
+                    onBlur={onBlur}
                 />
             </a>
         </div>
     );
 };
 
-export default connect<any, any, any>(
-    (state, props) => ({ element: getElement(state, props.elementId) }),
-    { updateElement }
-)(ButtonContainer);
+export default ButtonContainer;

@@ -1,12 +1,12 @@
 import React, { useState, useCallback } from "react";
 import gql from "graphql-tag";
-import { useApolloClient } from "react-apollo";
+import { useApolloClient } from "@apollo/react-hooks";
 import { i18n } from "@webiny/app/i18n";
 import { Form } from "@webiny/form";
 import { Alert } from "@webiny/ui/Alert";
 import { Grid, Cell } from "@webiny/ui/Grid";
 import { ButtonPrimary } from "@webiny/ui/Button";
-import LocaleCodesAutoComplete from "@webiny/app-i18n/admin/views/I18NLocales/LocaleCodesAutoComplete";
+import LocaleCodesAutoComplete from "../views/I18NLocales/LocaleCodesAutoComplete";
 import { CircularProgress } from "@webiny/ui/Progress";
 import { validation } from "@webiny/validation";
 import {
@@ -15,12 +15,11 @@ import {
     SimpleFormFooter,
     SimpleFormContent
 } from "@webiny/app-admin/components/SimpleForm";
-import { useI18N } from "@webiny/app-i18n/hooks/useI18N";
 
 const t = i18n.ns("app-i18n/admin/installation");
 
 const IS_INSTALLED = gql`
-    {
+    query IsI18NInstalled {
         i18n {
             isInstalled {
                 data
@@ -34,7 +33,7 @@ const IS_INSTALLED = gql`
 `;
 
 const INSTALL = gql`
-    mutation InstallSecurity($data: I18NInstallInput!) {
+    mutation InstallI18N($data: I18NInstallInput!) {
         i18n {
             install(data: $data) {
                 data
@@ -51,7 +50,6 @@ const I18NInstaller = ({ onInstalled }) => {
     const client = useApolloClient();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const { refetchLocales } = useI18N();
 
     const onSubmit = useCallback(async form => {
         setLoading(true);
@@ -64,20 +62,22 @@ const I18NInstaller = ({ onInstalled }) => {
             return;
         }
 
-        refetchLocales();
         onInstalled();
     }, []);
+
+    const label = error ? (
+        <Alert title={t`Something went wrong`} type={"danger"}>
+            {error}
+        </Alert>
+    ) : (
+        t`Installing I18N...`
+    );
 
     return (
         <Form onSubmit={onSubmit} data={{ code: "en-US" }}>
             {({ Bind, submit }) => (
                 <SimpleForm>
-                    {loading && <CircularProgress />}
-                    {error && (
-                        <Alert title={"Something went wrong"} type={"danger"}>
-                            {error}
-                        </Alert>
-                    )}
+                    {loading && <CircularProgress label={label} />}
                     <SimpleFormHeader title={"Install I18N"} />
                     <SimpleFormContent>
                         <Grid>
@@ -100,10 +100,10 @@ const I18NInstaller = ({ onInstalled }) => {
 };
 
 export default {
-    name: "installation-i18n",
+    name: "admin-installation-i18n",
     type: "admin-installation",
-    title: "I18N app",
-    dependencies: ["installation-security"],
+    title: "I18N",
+    dependencies: ["admin-installation-security"],
     secure: true,
     async isInstalled({ client }) {
         const { data } = await client.query({ query: IS_INSTALLED });

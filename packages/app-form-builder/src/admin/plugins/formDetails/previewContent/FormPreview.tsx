@@ -1,16 +1,16 @@
 import * as React from "react";
 import { css } from "emotion";
-import { Form } from "@webiny/app-form-builder/components/Form";
-import { DATA_FIELDS } from "@webiny/app-form-builder/components/Form/graphql";
-import { Query } from "react-apollo";
+import { Form } from "../../../../components/Form";
+import { DATA_FIELDS } from "../../../../components/Form/graphql";
+import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
-import { get } from "lodash";
-import { FbFormModel } from "@webiny/app-form-builder/types";
+import { FbFormModel, FbRevisionModel } from "../../../../types";
+import CircularProgress from "@webiny/ui/Progress/CircularProgress";
 
 const GET_FORM = gql`
-    query GetForm($id: ID!) {
-        forms {
-            getForm(id: $id) {
+    query FbGetForm($revision: ID!) {
+        formBuilder {
+            getForm(revision: $revision) {
                 data {
                     ${DATA_FIELDS}
                 }
@@ -32,19 +32,25 @@ const pageInnerWrapper = css({
 });
 
 type FormPreviewProps = {
-    revision: FbFormModel;
+    revision: FbRevisionModel;
     form: FbFormModel;
 };
 
 const FormPreview = ({ revision }: FormPreviewProps) => {
+    const { data, loading } = useQuery(GET_FORM, {
+        variables: {
+            revision: revision.id
+        }
+    });
+
+    if (loading) {
+        return <CircularProgress />;
+    }
+
     return (
-        <Query query={GET_FORM} variables={{ id: revision.id }}>
-            {data => (
-                <div className={pageInnerWrapper}>
-                    {revision && <Form preview data={get(data, "data.forms.getForm.data")} />}
-                </div>
-            )}
-        </Query>
+        <div className={pageInnerWrapper}>
+            {revision && <Form preview data={data?.formBuilder?.getForm?.data} />}
+        </div>
     );
 };
 

@@ -1,8 +1,7 @@
-import React from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { withActiveElement } from "@webiny/app-page-builder/editor/components";
-import { highlightElement, deactivateElement } from "@webiny/app-page-builder/editor/actions";
+import React, { useCallback } from "react";
+import { useRecoilState } from "recoil";
 import { css } from "emotion";
+import { activeElementAtom } from "../../recoil/modules";
 
 const backgroundStyle = css({
     position: "fixed",
@@ -12,16 +11,17 @@ const backgroundStyle = css({
     minHeight: "100%"
 });
 
-const Background = ({ element, deactivateElement, highlightElement }) => {
-    return (
-        <div
-            className={backgroundStyle}
-            onMouseOver={() => highlightElement({ element: null })}
-            onClick={() => element && deactivateElement()}
-        />
-    );
+const Background: React.FunctionComponent = () => {
+    const [activeElement, setActiveElementAtomValue] = useRecoilState(activeElementAtom);
+
+    const deactivateElement = useCallback(() => {
+        if (!activeElement) {
+            return;
+        }
+        setActiveElementAtomValue(null);
+    }, [activeElement]);
+
+    return <div className={backgroundStyle} onClick={deactivateElement} />;
 };
 
-export default connect<any, any, any>(null, { deactivateElement, highlightElement })(
-    withActiveElement()(Background)
-);
+export default React.memo(Background);

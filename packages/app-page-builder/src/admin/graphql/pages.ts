@@ -1,6 +1,4 @@
 import gql from "graphql-tag";
-import { getPlugins } from "@webiny/plugins";
-import { PbEditorPageSettingsPlugin } from "@webiny/app-page-builder/types";
 
 const error = `
 error {
@@ -8,24 +6,29 @@ error {
     message
 }`;
 
-const sharedFields = `
+export const DATA_FIELDS = `
     id
+    pid
     title
-    url
+    path
     version
-    parent
-    published
-    isHomePage
-    isErrorPage
-    isNotFoundPage
     locked
-    savedOn
+    status
+    revisions {
+        id
+        savedOn
+        locked
+        title
+        status
+        version
+    }
+    
 `;
 
 export const CREATE_PAGE = gql`
-    mutation PbCreatePage($category: ID!) {
+    mutation PbCreatePage($from: ID, $category: String) {
         pageBuilder {
-            page: createPage(data: { category: $category }) {
+            createPage(from: $from, category: $category) {
                 data {
                     id
                 }
@@ -36,56 +39,62 @@ export const CREATE_PAGE = gql`
 `;
 
 export const LIST_PAGES = gql`
-    query PbListPages($sort: JSON, $search: String, $limit: Int, $after: String, $before: String) {
+    query PbListPages(
+        $where: PbListPagesWhereInput
+        $sort: PbListPagesSortInput
+        $search: PbListPagesSearchInput
+        $limit: Int
+        $page: Int
+    ) {
         pageBuilder {
-            pages: listPages(sort: $sort, search: $search, limit: $limit, after: $after, before: $before) {
+            listPages(where: $where, sort: $sort, limit: $limit, page: $page, search: $search) {
                 data {
-                    ${sharedFields}
+                    id
+                    pid
+                    status
+                    title
+                    version
+                    savedOn
                     category {
-                        id
                         name
+                        slug
                     }
                     createdBy {
-                        firstName
-                        lastName
+                        id
+                        displayName
                     }
                 }
                 meta {
-                    cursors {
-                        next
-                        previous
-                    }
-                    hasNextPage
-                    hasPreviousPage
+                    page
+                    limit
                     totalCount
+                    totalPages
+                    from
+                    to
+                    nextPage
+                    previousPage
+                }
+                error {
+                    data
+                    code
+                    message
                 }
             }
         }
     }
 `;
 
-export const GET_PAGE = () => gql`
+export const GET_PAGE = gql`
     query PbGetPage($id: ID!) {
         pageBuilder {
-            page: getPage(id: $id) {
+            getPage(id: $id) {
                 data {
-                    ${sharedFields}
-                    snippet
-                    content
-                    settings {
-                        _empty
-                        ${getPlugins("pb-editor-page-settings")
-                            .map((pl: PbEditorPageSettingsPlugin) => pl.fields)
-                            .join("\n")}
-                    }
-                    category {
+                    ${DATA_FIELDS}
+                    createdBy {
                         id
-                        name
-                        url
                     }
-                    revisions {
-                        ${sharedFields}
-                    }
+                    content
+
                 }
                 ${error}
             }
@@ -93,12 +102,12 @@ export const GET_PAGE = () => gql`
     }
 `;
 
-export const CREATE_REVISION_FORM = gql`
-    mutation PbCreateRevisionFrom($revision: ID!) {
+export const PUBLISH_PAGE = gql`
+    mutation PbPublishPage($id: ID!) {
         pageBuilder {
-            revision: createRevisionFrom(revision: $revision) {
+            publishPage(id: $id) {
                 data {
-                    id
+                    ${DATA_FIELDS}
                 }
                 ${error}
             }
@@ -106,24 +115,13 @@ export const CREATE_REVISION_FORM = gql`
     }
 `;
 
-export const PUBLISH_REVISION = gql`
-    mutation PbPublishRevision($id: ID!) {
+export const UNPUBLISH_PAGE = gql`
+    mutation PbUnpublishPage($id: ID!) {
         pageBuilder {
-            publishRevision(id: $id) {
+            unpublishPage(id: $id) {
                 data {
-                    ${sharedFields}
+                    ${DATA_FIELDS}
                 }
-                ${error}
-            }
-        }
-    }
-`;
-
-export const DELETE_REVISION = gql`
-    mutation PbDeleteRevision($id: ID!) {
-        pageBuilder {
-            deleteRevision(id: $id) {
-                data
                 ${error}
             }
         }
@@ -134,43 +132,12 @@ export const DELETE_PAGE = gql`
     mutation PbDeletePage($id: ID!) {
         pageBuilder {
             deletePage(id: $id) {
-                data
-                ${error}
-            }
-        }
-    }
-`;
-
-const elementFields = /*GraphQL*/ `
-    id
-    name
-    type
-    category
-    content
-    preview {
-        src
-        meta
-    }
-`;
-
-export const LIST_ELEMENTS = gql`
-    query PbListElements {
-        pageBuilder {
-            elements: listElements(limit: 1000) {
                 data {
-                    ${elementFields}
-                }
-            }
-        }
-    }
-`;
-
-export const CREATE_ELEMENT = gql`
-    mutation PbCreateElement($data: PbElementInput!) {
-        pageBuilder {
-            element: createElement(data: $data) {
-                data {
-                    ${elementFields}
+                    latestPage {
+                        id
+                        status
+                        version
+                    }
                 }
                 ${error}
             }
@@ -178,13 +145,43 @@ export const CREATE_ELEMENT = gql`
     }
 `;
 
-export const UPDATE_ELEMENT = gql`
-    mutation PbUpdateElement($id: ID!, $data: PbUpdateElementInput!) {
+const PAGE_ELEMENT_FIELDS = /*GraphQL*/ `
+    {
+        id
+        name
+        type
+        category
+        content
+        preview
+    }
+`;
+
+export const LIST_PAGE_ELEMENTS = gql`
+    query PbListPageElements {
         pageBuilder {
-            element: updateElement(id: $id, data: $data) {
-                data {
-                    ${elementFields}
-                }
+            listPageElements {
+                data ${PAGE_ELEMENT_FIELDS}
+            }
+        }
+    }
+`;
+
+export const CREATE_PAGE_ELEMENT = gql`
+    mutation PbCreatePageElement($data: PbPageElementInput!) {
+        pageBuilder {
+            createPageElement(data: $data) {
+                data ${PAGE_ELEMENT_FIELDS}
+                ${error}
+            }
+        }
+    }
+`;
+
+export const UPDATE_PAGE_ELEMENT = gql`
+    mutation PbUpdatePageElement($id: ID!, $data: PbPageElementInput!) {
+        pageBuilder {
+            updatePageElement(id: $id, data: $data) {
+                data ${PAGE_ELEMENT_FIELDS}
                 ${error}
             }
         }

@@ -1,9 +1,10 @@
 import gql from "graphql-tag";
 
-const I18N_FIELDS = `
-    values {
-        value
-        locale
+const ERROR_FIELDS = `
+    {
+        message
+        code
+        data
     }
 `;
 
@@ -12,27 +13,17 @@ export const FIELDS_FIELDS = `
         fieldId
         type
         name
-        label {
-            ${I18N_FIELDS}
-        }
-        placeholderText {
-            ${I18N_FIELDS}
-        }
-        helpText {
-            ${I18N_FIELDS}
-        }  
+        label
+        placeholderText
+        helpText
         options {
-            label {
-                ${I18N_FIELDS}
-            }
+            label
             value
         }
         validation {
             name
             settings
-            message {
-                ${I18N_FIELDS}
-            }
+            message
         }
         settings
 `;
@@ -46,35 +37,25 @@ const SETTINGS_FIELDS = /* GraphQL */ `
                 siteKey
                 secretKey
             }
-            errorMessage {
-                ${I18N_FIELDS}
-            }
+            errorMessage
         }
         layout {
             renderer
         }
-        successMessage {
-            ${I18N_FIELDS}
-        }
-        submitButtonLabel {
-            ${I18N_FIELDS}
-        }
+        successMessage
+        submitButtonLabel
         termsOfServiceMessage {
             enabled
-            message {
-                ${I18N_FIELDS}
-            }
-            errorMessage {
-                ${I18N_FIELDS}
-            }
+            message
+            errorMessage
         }
     }
 `;
 
 export const GET_FORM = gql`
-    query GetForm($id: ID!) {
-        forms {
-            getForm(id: $id) {
+    query FbGetForm($revision: ID!) {
+        formBuilder {
+            getForm(revision: $revision) {
                 data {
                     id
                     name
@@ -88,24 +69,17 @@ export const GET_FORM = gql`
                     published
                     locked
                     status
-                    revisions {
-                        id
-                        name
-                        published
-                        locked
-                        status
-                        version
-                    }
                 }
+                error ${ERROR_FIELDS}
             }
         }
     }
 `;
 
 export const UPDATE_REVISION = gql`
-    mutation UpdateForm($id: ID!, $data: UpdateFormInput!) {
-        forms {
-            updateRevision(id: $id, data: $data) {
+    mutation UpdateForm($revision: ID!, $data: FbUpdateFormInput!) {
+        formBuilder {
+            updateRevision(revision: $revision, data: $data) {
                 data {
                     id
                     name
@@ -117,6 +91,7 @@ export const UPDATE_REVISION = gql`
                     settings ${SETTINGS_FIELDS}
                     triggers
                 }
+                error ${ERROR_FIELDS}
             }
         }
     }

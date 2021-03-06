@@ -1,18 +1,24 @@
 import React from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { getElement } from "@webiny/app-page-builder/editor/selectors";
-import { i18n } from "@webiny/app/i18n";
-const t = i18n.ns("app-typeform/admin");
+import { useRecoilValue } from "recoil";
+import { elementByIdSelector } from "@webiny/app-page-builder/editor/recoil/modules";
+import useRenderEmptyEmbed from "@webiny/app-page-builder/editor/plugins/elements/utils/oembed/useRenderEmptyEmbed";
 
-const TypeFormEmbed = (props: { element }) => {
-    const { source } = props.element.data;
+type TypeFormEmbedPropsType = {
+    elementId: string;
+};
+const TypeFormEmbed: React.FunctionComponent<TypeFormEmbedPropsType> = ({ elementId }) => {
+    const element = useRecoilValue(elementByIdSelector(elementId));
+    const renderEmpty = useRenderEmptyEmbed(element);
+
+    if (!element) {
+        return null;
+    }
+    const { source } = element.data;
     if (!source || !source.url) {
-        return <span>{t`You must configure your embed in the settings!`}</span>;
+        return renderEmpty();
     }
 
     return <iframe frameBorder="0" src={source.url} style={{ height: "100%", width: "100%" }} />;
 };
 
-export default connect((state, props: any) => ({
-    element: getElement(state, props.elementId)
-}))(TypeFormEmbed);
+export default React.memo(TypeFormEmbed);

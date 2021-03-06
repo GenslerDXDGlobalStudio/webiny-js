@@ -1,14 +1,13 @@
 import React from "react";
 import { css } from "emotion";
-import { createValue } from "@webiny/app-page-builder/editor/components/Slate";
 import {
+    DisplayMode,
     PbEditorPageElementPlugin,
-    PbEditorPageElementSettingsPlugin
-} from "@webiny/app-page-builder/types";
-import { ReactComponent as ButtonIcon } from "./round-toggle_on-24px.svg";
+    PbEditorPageElementStyleSettingsPlugin
+} from "../../../../types";
+import { createInitialPerDeviceSettingValue } from "../../elementSettings/elementSettingsUtils";
 import ButtonSettings from "./ButtonSettings";
 import Button from "./Button";
-import Action from "../../elementSettings/components/Action";
 
 const buttonWrapper = css({
     display: "flex",
@@ -33,31 +32,29 @@ export default () => {
                 }
             },
             settings: [
-                "pb-editor-page-element-settings-button",
-                "pb-editor-page-element-settings-link",
-                "",
-                "pb-editor-page-element-settings-horizontal-align-flex",
-                "",
+                "pb-editor-page-element-style-settings-button",
+                "pb-editor-page-element-style-settings-link",
+                "pb-editor-page-element-style-settings-horizontal-align-flex",
+                "pb-editor-page-element-style-settings-margin",
                 "pb-editor-page-element-settings-clone",
-                "pb-editor-page-element-settings-delete",
-                ""
+                "pb-editor-page-element-settings-delete"
             ],
-            target: ["column", "row"],
+            target: ["cell", "block"],
             create(options) {
                 return {
                     type: "button",
                     elements: [],
                     data: {
-                        text: createValue("Click me", "button"),
+                        buttonText: "Click me",
                         settings: {
-                            margin: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            },
-                            padding: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            }
+                            margin: createInitialPerDeviceSettingValue(
+                                { all: "0px" },
+                                DisplayMode.DESKTOP
+                            ),
+                            horizontalAlignFlex: createInitialPerDeviceSettingValue(
+                                "center",
+                                DisplayMode.DESKTOP
+                            )
                         }
                     },
                     ...options
@@ -68,14 +65,11 @@ export default () => {
             }
         } as PbEditorPageElementPlugin,
         {
-            name: "pb-editor-page-element-settings-button",
-            type: "pb-editor-page-element-settings",
-            renderAction() {
-                return <Action plugin={this.name} tooltip={"Button"} icon={<ButtonIcon />} />;
-            },
-            renderMenu() {
+            name: "pb-editor-page-element-style-settings-button",
+            type: "pb-editor-page-element-style-settings",
+            render() {
                 return <ButtonSettings />;
             }
-        } as PbEditorPageElementSettingsPlugin
+        } as PbEditorPageElementStyleSettingsPlugin
     ];
 };

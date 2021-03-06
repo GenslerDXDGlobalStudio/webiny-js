@@ -5,19 +5,22 @@
     "node_modules",
     "dist",
     "../form",
-    "../app-i18n",
     "../app-page-builder",
-    "../app-plugin-admin-welcome-screen"
+    "../app-plugin-admin-welcome-screen",
+    "../app",
+    "../app-admin",
+    "../app-security",
+    "../plugins",
+    "../react-router",
+    "../ui",
+    "../validation"
   ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "declarationDir": "./dist"
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
   },
-  "references": [
-    { "path": "../form/tsconfig.build.json" },
-    { "path": "../app-i18n/tsconfig.build.json" },
-    { "path": "../app-page-builder/tsconfig.build.json" },
-    { "path": "../app-plugin-admin-welcome-screen/tsconfig.build.json" }
-  ]
+  "references": []
 }

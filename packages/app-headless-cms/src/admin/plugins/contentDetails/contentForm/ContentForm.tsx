@@ -1,29 +1,42 @@
-import * as React from "react";
-import { ContentModelForm } from "@webiny/app-headless-cms/admin/components/ContentModelForm";
+import React, { useCallback, useMemo, useState } from "react";
 import { useRouter } from "@webiny/react-router";
-import {
-    createCreateFromMutation,
-    createCreateMutation,
-    createListQuery,
-    createUpdateMutation
-} from "@webiny/app-headless-cms/admin/components/ContentModelForm/graphql";
-import { useMutation } from "@webiny/app-headless-cms/admin/hooks";
-import { useCallback, useMemo } from "react";
-import get from "lodash/get";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import cloneDeep from "lodash/cloneDeep";
+import { useMutation } from "../../../hooks";
+import { ContentModelForm } from "../../../views/components/ContentModelForm";
+import * as GQL from "../../../views/components/ContentModelForm/graphql";
+import * as GQLCache from "../cache";
+import { CmsEditorContentEntry, CmsEditorContentModel } from "../../../../types";
+import { prepareFormData } from "./prepareFormData";
 
-const ContentForm = ({ contentModel, content, getLocale, setLoading, getLoading, setState }) => {
-    const query = new URLSearchParams(location.search);
+interface ContentFormProps {
+    contentModel: CmsEditorContentModel;
+    entry: CmsEditorContentEntry;
+    setLoading: (value: boolean) => void;
+    getLoading: () => boolean;
+    setState: (value: any) => void;
+    listQueryVariables: Record<string, any>;
+}
+const ContentForm: React.FunctionComponent<ContentFormProps> = ({
+    contentModel,
+    entry,
+    setLoading,
+    getLoading,
+    setState,
+    listQueryVariables
+}) => {
     const { history } = useRouter();
     const { showSnackbar } = useSnackbar();
 
-    const { CREATE_CONTENT, UPDATE_CONTENT, CREATE_CONTENT_FROM, LIST_CONTENT } = useMemo(() => {
+    const goToRevision = useCallback(id => {
+        history.push(`/cms/content-entries/${contentModel.modelId}?id=${encodeURIComponent(id)}`);
+    }, []);
+
+    const { CREATE_CONTENT, UPDATE_CONTENT, CREATE_CONTENT_FROM } = useMemo(() => {
         return {
-            LIST_CONTENT: createListQuery(contentModel),
-            CREATE_CONTENT: createCreateMutation(contentModel),
-            UPDATE_CONTENT: createUpdateMutation(contentModel),
-            CREATE_CONTENT_FROM: createCreateFromMutation(contentModel)
+            LIST_CONTENT: GQL.createListQuery(contentModel),
+            CREATE_CONTENT: GQL.createCreateMutation(contentModel),
+            UPDATE_CONTENT: GQL.createUpdateMutation(contentModel),
+            CREATE_CONTENT_FROM: GQL.createCreateFromMutation(contentModel)
         };
     }, [contentModel.modelId]);
 
@@ -31,109 +44,138 @@ const ContentForm = ({ contentModel, content, getLocale, setLoading, getLoading,
     const [updateMutation] = useMutation(UPDATE_CONTENT);
     const [createFromMutation] = useMutation(CREATE_CONTENT_FROM);
 
+    const [invalidFields, setInvalidFields] = useState<Record<string, string>>({});
+
+    const setInvalidFieldValues = errors => {
+        const values = (errors || []).reduce((acc, er) => {
+            acc[er.fieldId] = er.error;
+            return acc;
+        }, {});
+        setInvalidFields(() => values);
+    };
+
+    const resetInvalidFieldValues = () => {
+        setInvalidFields(() => ({}));
+    };
+
     const createContent = useCallback(
         async data => {
             setLoading(true);
             const response = await createMutation({
                 variables: { data },
-                update(cache, response) {
-                    if (response.data.content.error) {
+                update(cache, { data }) {
+                    const { data: entry, error } = data.content;
+                    if (error) {
+                        showSnackbar(error.message);
+                        setInvalidFieldValues(error.data);
                         return;
                     }
-
-                    // Prepend the newly created item to the content list.
-                    const data = cloneDeep(
-                        cache.readQuery<any>({
-                            query: LIST_CONTENT
-                        })
-                    );
-                    data.content.data = [response.data.content.data, ...data.content.data];
-                    cache.writeQuery({ query: LIST_CONTENT, data: data });
+                    resetInvalidFieldValues();
+                    GQLCache.addEntryToListCache(contentModel, cache, entry, listQueryVariables);
                 }
             });
             setLoading(false);
 
-            if (response.data.content.error) {
-                return showSnackbar(response.data.content.message);
+            const { error, data: entry } = response.data.content;
+            if (error) {
+                showSnackbar(error.message);
+                setInvalidFieldValues(error.data);
+                return null;
             }
-
-            showSnackbar("Content created successfully.");
-            const { id } = response.data.content.data;
-            query.set("id", id);
-            history.push({ search: query.toString() });
-            return response;
+            resetInvalidFieldValues();
+            showSnackbar(`${contentModel.name} entry created successfully!`);
+            goToRevision(entry.id);
+            return entry;
         },
-        [contentModel.modelId]
+        [contentModel.modelId, listQueryVariables]
     );
 
     const updateContent = useCallback(
-        async (id, data) => {
+        async (revision, data) => {
             setLoading(true);
             const response = await updateMutation({
-                variables: { id, data }
+                variables: { revision, data }
             });
             setLoading(false);
 
-            if (response.data.content.error) {
-                return showSnackbar(response.data.content.message);
+            const { error } = response.data.content;
+            if (error) {
+                showSnackbar(error.message);
+                setInvalidFieldValues(error.data);
+                return null;
             }
 
+            resetInvalidFieldValues();
             showSnackbar("Content saved successfully.");
-            return response;
+            const { data: entry } = response.data.content;
+            return entry;
         },
         [contentModel.modelId]
     );
 
     const createContentFrom = useCallback(
-        async (id, data) => {
+        async (revision, formData) => {
             setLoading(true);
             const response = await createFromMutation({
-                variables: { revision: id, data },
-                update(cache, response) {
-                    if (response.data.content.error) {
+                variables: { revision, data: formData },
+                update(cache, { data }) {
+                    const { data: newRevision, error } = data.content;
+                    if (error) {
+                        showSnackbar(error.message);
+                        setInvalidFieldValues(error.data);
                         return;
                     }
-
-                    const data = cloneDeep(
-                        cache.readQuery<any>({ query: LIST_CONTENT })
+                    resetInvalidFieldValues();
+                    GQLCache.updateLatestRevisionInListCache(
+                        contentModel,
+                        cache,
+                        newRevision,
+                        listQueryVariables
                     );
-                    const previousItemIndex = data.content.data.findIndex(item => item.id === id);
-                    data.content.data.splice(previousItemIndex, 1, response.data.content.data);
-                    cache.writeQuery({ query: LIST_CONTENT, data });
+                    GQLCache.addRevisionToRevisionsCache(contentModel, cache, newRevision);
+
+                    showSnackbar("A new revision was created!");
+                    history.push(
+                        `/cms/content-entries/${contentModel.modelId}?id=${encodeURIComponent(
+                            newRevision.id
+                        )}`
+                    );
                 }
             });
             setLoading(false);
 
-            if (response.data.content.error) {
-                return showSnackbar(response.data.content.message);
+            const { data, error } = response.data.content;
+            if (error) {
+                showSnackbar(error.message);
+                setInvalidFieldValues(error.data);
+                return null;
             }
+            resetInvalidFieldValues();
 
-            showSnackbar("A new revision was created.");
-            const { id: revisionId } = response.data.content.data;
-            query.set("id", revisionId);
-            history.push({ search: query.toString() });
-
-            return response;
+            return data;
         },
-        [contentModel.modelId]
+        [contentModel.modelId, listQueryVariables]
     );
 
     return (
         <ContentModelForm
-            locale={getLocale()}
             loading={getLoading()}
             contentModel={contentModel}
-            content={content}
+            entry={entry}
             onForm={contentForm => setState({ contentForm })}
-            onSubmit={async data => {
-                if (content.id) {
-                    if (get(content, "meta.locked")) {
-                        return createContentFrom(content.id, data);
-                    }
-                    return updateContent(content.id, data);
+            onSubmit={async fData => {
+                const data = prepareFormData(fData, contentModel);
+                if (!entry.id) {
+                    return createContent(data);
                 }
-                return createContent(data);
+                const { meta } = entry;
+                const { locked: isLocked } = meta || {};
+                if (!isLocked) {
+                    return updateContent(entry.id, data);
+                }
+                return createContentFrom(entry.id, data);
             }}
+            invalidFields={invalidFields}
         />
     );
 };

@@ -1,0 +1,14 @@
+{
+  "extends": "../../../../../tsconfig",
+  "references": [
+    {
+      "path": "../../../../../packages/api-prerendering-service"
+    },
+    {
+      "path": "../../../../../packages/handler-aws"
+    },
+    {
+      "path": "../../../../../packages/db-dynamodb"
+    }
+  ]
+}

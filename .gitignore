@@ -21,7 +21,19 @@ build/
 .verdaccio
 .history
 *.tsbuildinfo
-yarn.lock
 cypress.json
+.pulumi
+Pulumi.*
+!Pulumi.yaml
+pbInstalation.zip
+globalConfig.json
 .graphqlconfig
 schema.graphql
+.tmp/
+# yarn2 files
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*

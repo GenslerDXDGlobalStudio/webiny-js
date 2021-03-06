@@ -1,77 +1,131 @@
-import * as React from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import React, { CSSProperties } from "react";
+import { useRecoilValue } from "recoil";
 import { css } from "emotion";
-import { isEqual } from "lodash";
-import Element from "@webiny/app-page-builder/editor/components/Element";
-import DropZone from "@webiny/app-page-builder/editor/components/DropZone";
-import { dropElement } from "@webiny/app-page-builder/editor/actions";
-import { getElement } from "@webiny/app-page-builder/editor/selectors";
+import kebabCase from "lodash/kebabCase";
+import { IconButton } from "@webiny/ui/Button";
+import DropZone from "../../../components/DropZone";
+import Element from "../../../components/Element";
+import { DragObjectWithTypeWithTarget } from "../../../components/Droppable";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { DropElementActionEvent, TogglePluginActionEvent } from "../../../recoil/actions";
+import { elementByIdSelector, uiAtom, highlightElementAtom } from "../../../recoil/modules";
+import { ReactComponent as AddCircleOutline } from "../../../assets/icons/baseline-add_circle-24px.svg";
+import BlockContainerInnerWrapper from "./BlockContainerInnerWrapper";
 
-const BlockContainer = ({
+const addIcon = css({
+    color: "var(--mdc-theme-secondary)",
+    transition: "transform 0.2s",
+    "&:hover": {
+        transform: "scale(1.3)"
+    },
+    "&::before, &::after": {
+        display: "none"
+    }
+});
+
+type BlockContainerPropsType = {
+    combineClassNames: (...classes: string[]) => string;
+    elementStyle: CSSProperties;
+    elementAttributes: { [key: string]: string };
+    customClasses: string[];
+    elementId: string;
+};
+const BlockContainer: React.FunctionComponent<BlockContainerPropsType> = ({
     elementStyle,
     elementAttributes,
     customClasses,
     combineClassNames,
-    element,
-    dropElement
+    elementId
 }) => {
-    const { width, alignItems, justifyContent, ...containerStyle } = elementStyle;
-    const { id, type, elements } = element;
+    const { displayMode } = useRecoilValue(uiAtom);
+    const handler = useEventActionHandler();
+    const element = useRecoilValue(elementByIdSelector(elementId));
+    const highlightedElement = useRecoilValue(highlightElementAtom);
+    const { id, path, type, elements } = element;
 
+    const containerStyle = elementStyle;
+    // Use per-device style
+    const width = elementStyle[`--${kebabCase(displayMode)}-width`];
+    /**
+     * We're swapping "justifyContent" & "alignItems" value here because
+     * ".webiny-pb-layout-block" has "flex-direction: column"
+     */
+    const alignItems = elementStyle[`--${kebabCase(displayMode)}-justify-content`];
+    const justifyContent = elementStyle[`--${kebabCase(displayMode)}-align-items`];
+
+    const onAddClick = () => {
+        handler.trigger(
+            new TogglePluginActionEvent({
+                name: "pb-editor-toolbar-add-element",
+                params: { id, path, type }
+            })
+        );
+    };
+
+    const dropElementAction = (source: DragObjectWithTypeWithTarget, position: number) => {
+        handler.trigger(
+            new DropElementActionEvent({
+                source,
+                target: {
+                    id,
+                    type,
+                    position
+                }
+            })
+        );
+    };
+
+    const totalElements = elements.length;
     return (
         <div
-            style={{ width: "100%", display: "flex", justifyContent: "center" }}
-            className={"webiny-pb-layout-block-container " + css(containerStyle)}
+            style={{ width: "100%", display: "flex" }}
+            className={"webiny-pb-layout-block-container " + css(containerStyle as any)}
             {...elementAttributes}
         >
             <div
                 style={{
-                    width: width ? width : "100%",
-                    alignSelf: justifyContent,
-                    alignItems: alignItems
+                    width,
+                    justifyContent,
+                    alignItems
                 }}
                 className={combineClassNames(...customClasses)}
             >
-                {!elements.length && (
-                    <DropZone.Center element={element}>Add an element here</DropZone.Center>
+                {totalElements === 0 && (
+                    <DropZone.Center
+                        id={id}
+                        isHighlighted={highlightedElement === id}
+                        type={type}
+                        onDrop={source => dropElementAction(source, 0)}
+                    >
+                        <IconButton
+                            className={addIcon + " addIcon"}
+                            icon={<AddCircleOutline />}
+                            onClick={onAddClick}
+                        />
+                    </DropZone.Center>
                 )}
-                {elements.map((childId, index) => (
-                    <React.Fragment key={childId}>
+                {elements.map((childId: string, index) => (
+                    <BlockContainerInnerWrapper
+                        key={childId}
+                        elementId={childId}
+                        displayMode={displayMode}
+                    >
                         <DropZone.Above
                             type={type}
-                            onDrop={source =>
-                                dropElement({
-                                    source,
-                                    target: { id, type, position: index }
-                                })
-                            }
+                            onDrop={source => dropElementAction(source, index)}
                         />
                         <Element key={childId} id={childId} />
-                        {index === elements.length - 1 && (
+                        {index === totalElements - 1 && (
                             <DropZone.Below
                                 type={type}
-                                onDrop={source => {
-                                    dropElement({
-                                        source,
-                                        target: {
-                                            id,
-                                            type,
-                                            position: elements.length
-                                        }
-                                    });
-                                }}
+                                onDrop={source => dropElementAction(source, totalElements)}
                             />
                         )}
-                    </React.Fragment>
+                    </BlockContainerInnerWrapper>
                 ))}
             </div>
         </div>
     );
 };
 
-export default connect<any, any, any>(
-    (state, props) => ({ element: getElement(state, props.elementId) }),
-    { dropElement },
-    null,
-    { areStatePropsEqual: isEqual }
-)(BlockContainer);
+export default React.memo(BlockContainer);

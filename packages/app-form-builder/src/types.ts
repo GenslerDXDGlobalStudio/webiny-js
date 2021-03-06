@@ -1,8 +1,7 @@
 import * as React from "react";
 import { Plugin } from "@webiny/plugins/types";
-import { ReCaptchaComponent } from "@webiny/app-form-builder/components/Form/components/createReCaptchaComponent";
-import { TermsOfServiceComponent } from "@webiny/app-form-builder/components/Form/components/createTermsOfServiceComponent";
-import { I18NStringValue } from "@webiny/app-i18n/types";
+import { ReCaptchaComponent } from "./components/Form/components/createReCaptchaComponent";
+import { TermsOfServiceComponent } from "./components/Form/components/createTermsOfServiceComponent";
 import {
     BindComponent,
     FormChildrenFunctionParams,
@@ -10,11 +9,11 @@ import {
     FormChildrenFunctionParamsSubmit
 } from "@webiny/form";
 import { ApolloClient } from "apollo-client";
-import { DataListProps } from "@webiny/app/hooks/useDataList/useDataList";
+import { SecurityContextValue } from "@webiny/app-security";
 
 export type FbBuilderFieldValidator = {
     name: string;
-    message: I18NStringValue;
+    message: string;
     settings: any;
 };
 
@@ -50,7 +49,7 @@ export type FbFormFieldValidator = {
 };
 
 export type FbFormFieldValidatorPlugin = Plugin & {
-    type: "form-field-validator";
+    type: "fb-form-field-validator";
     validator: {
         name: string;
         validate: (value: any, validator: FbFormFieldValidator) => Promise<any>;
@@ -76,7 +75,7 @@ export type FbBuilderFieldPlugin = Plugin & {
         validators?: string[];
         description: string;
         icon: React.ReactNode;
-        createField: ({ i18n: any }) => FbFormModelField;
+        createField: (props?: { [key: string]: any }) => FbFormModelField;
         renderSettings?: (params: {
             form: FormChildrenFunctionParams;
             afterChangeLabel: (value: string) => void;
@@ -85,9 +84,24 @@ export type FbBuilderFieldPlugin = Plugin & {
     };
 };
 
+export type FbRevisionModel = {
+    id: string;
+    name: string;
+    version: number;
+    published: boolean;
+    status: string;
+    savedOn: string;
+    createdBy: {
+        id: string;
+        displayName: string;
+    };
+};
+
 export type FbFormDetailsPluginRenderParams = {
+    security: SecurityContextValue;
     refreshForms: () => Promise<void>;
     form: FbFormModel;
+    revisions: FbRevisionModel[];
     loading: boolean;
 };
 
@@ -101,15 +115,6 @@ export type FbFormDetailsSubmissionsPlugin = Plugin & {
     render: (props: { form: FbFormModel }) => React.ReactNode;
 };
 
-/**
- * Enables adding additional multi-select actions in the form submissions section.
- * @see https://docs.webiny.com/docs/webiny-apps/form-builder/development/plugins-reference/app#fb-form-details-submissions-list-multi-select-action
- */
-export type FbFormDetailsSubmissionsListMultiSelectActionPlugin = Plugin & {
-    type: "fb-form-details-submissions-list-multi-select-action";
-    render: (props: { dataList: DataListProps }) => React.ReactNode;
-};
-
 export type FbFormModel = {
     id: FieldIdType;
     version: number;
@@ -120,7 +125,7 @@ export type FbFormModel = {
     settings: any;
     status: string;
     savedOn: string;
-    revisions: any[];
+    revisions: FbRevisionModel[];
     overallStats: {
         submissions: number;
         views: number;
@@ -133,18 +138,26 @@ export type FbFormModelField = {
     type: string;
     name: string;
     fieldId?: FieldIdType;
-    label?: I18NStringValue;
-    helpText?: I18NStringValue;
-    placeholderText?: I18NStringValue;
+    label?: string;
+    helpText?: string;
+    placeholderText?: string;
     validation?: FbBuilderFieldValidator[];
-    options?: Array<{ value: string; label: I18NStringValue }>;
+    options?: Array<{ value: string; label: string }>;
     settings: { [key: string]: any };
 };
 
 export type FbFormSubmissionData = {
-    data: any;
+    id: string;
+    locale: string;
+    data: Record<string, any>;
+    meta: Record<string, any>;
     form: {
-        revision: FbFormModel;
+        id: string;
+        parent: string;
+        name: string;
+        version: number;
+        fields: Record<string, any>[];
+        layout: string[][];
     };
 };
 
@@ -230,6 +243,7 @@ export type FormComponentPropsType = {
 export type FbFormRenderComponentProps = {
     preview?: boolean;
     data?: FbFormModel;
+    client?: ApolloClient<any>;
 };
 
 export type FormSubmitResponseType = {

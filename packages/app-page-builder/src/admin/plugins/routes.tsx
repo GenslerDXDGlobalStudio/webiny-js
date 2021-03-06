@@ -1,24 +1,19 @@
-import React, { Suspense, lazy } from "react";
+import React from "react";
 import { Route } from "@webiny/react-router";
 import Helmet from "react-helmet";
 import { AdminLayout } from "@webiny/app-admin/components/AdminLayout";
 import { SecureRoute } from "@webiny/app-security/components";
 import { RoutePlugin } from "@webiny/app/types";
-import { CircularProgress } from "@webiny/ui/Progress";
 import { EditorPluginsLoader } from "../components/EditorPluginsLoader";
 
-const Loader = ({ children, ...props }) => (
-    <Suspense fallback={<CircularProgress />}>{React.cloneElement(children, props)}</Suspense>
-);
+import Categories from "../views/Categories/Categories";
+import Menus from "../views/Menus/Menus";
+import Pages from "../views/Pages/Pages";
+import Editor from "../views/Pages/Editor";
 
-const Categories = lazy(() => import("@webiny/app-page-builder/admin/views/Categories/Categories"));
-const Menus = lazy(() => import("@webiny/app-page-builder/admin/views/Menus/Menus"));
-const Pages = lazy(() => import("@webiny/app-page-builder/admin/views/Pages/Pages"));
-const Editor = lazy(() => import("@webiny/app-page-builder/admin/views/Pages/Editor"));
-
-const ROLE_PB_CATEGORY = ["pb:category:crud"];
-const ROLE_PB_MENUS = ["pb:menu:crud"];
-const ROLE_PB_PAGES = ["pb:page:crud"];
+const ROLE_PB_CATEGORY = "pb.category";
+const ROLE_PB_MENUS = "pb.menu";
+const ROLE_PB_PAGES = "pb.page";
 
 const plugins: RoutePlugin[] = [
     {
@@ -29,12 +24,10 @@ const plugins: RoutePlugin[] = [
                 exact
                 path="/page-builder/categories"
                 render={() => (
-                    <SecureRoute scopes={ROLE_PB_CATEGORY}>
+                    <SecureRoute permission={ROLE_PB_CATEGORY}>
                         <AdminLayout>
                             <Helmet title={"Page Builder - Categories"} />
-                            <Loader>
-                                <Categories />
-                            </Loader>
+                            <Categories />
                         </AdminLayout>
                     </SecureRoute>
                 )}
@@ -49,12 +42,10 @@ const plugins: RoutePlugin[] = [
                 exact
                 path="/page-builder/menus"
                 render={() => (
-                    <SecureRoute scopes={ROLE_PB_MENUS}>
+                    <SecureRoute permission={ROLE_PB_MENUS}>
                         <AdminLayout>
                             <Helmet title={"Page Builder - Menus"} />
-                            <Loader>
-                                <Menus />
-                            </Loader>
+                            <Menus />
                         </AdminLayout>
                     </SecureRoute>
                 )}
@@ -69,13 +60,11 @@ const plugins: RoutePlugin[] = [
                 exact
                 path="/page-builder/pages"
                 render={({ location }) => (
-                    <SecureRoute scopes={ROLE_PB_PAGES}>
+                    <SecureRoute permission={ROLE_PB_PAGES}>
                         <EditorPluginsLoader location={location}>
                             <AdminLayout>
                                 <Helmet title={"Page Builder - Pages"} />
-                                <Loader>
-                                    <Pages />
-                                </Loader>
+                                <Pages />
                             </AdminLayout>
                         </EditorPluginsLoader>
                     </SecureRoute>
@@ -91,12 +80,10 @@ const plugins: RoutePlugin[] = [
                 exact
                 path="/page-builder/editor/:id"
                 render={({ location }) => (
-                    <SecureRoute scopes={ROLE_PB_PAGES}>
+                    <SecureRoute permission={ROLE_PB_PAGES}>
                         <EditorPluginsLoader location={location}>
                             <Helmet title={"Page Builder - Edit page"} />
-                            <Loader>
-                                <Editor />
-                            </Loader>
+                            <Editor />
                         </EditorPluginsLoader>
                     </SecureRoute>
                 )}

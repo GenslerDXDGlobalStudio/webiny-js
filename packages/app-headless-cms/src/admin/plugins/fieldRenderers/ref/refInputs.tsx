@@ -1,9 +1,13 @@
 import React from "react";
-import { CmsEditorFieldRendererPlugin } from "@webiny/app-headless-cms/types";
+import { CmsEditorFieldRendererPlugin } from "../../../../types";
 import ContentEntriesMultiAutocomplete from "./components/ContentEntriesMultiAutoComplete";
 
 import { i18n } from "@webiny/app/i18n";
 const t = i18n.ns("app-headless-cms/admin/fields/ref");
+
+const getKey = (field, bind) => {
+    return bind.form.state.data.id + "." + field.fieldId;
+};
 
 const plugin: CmsEditorFieldRendererPlugin = {
     type: "cms-editor-field-renderer",
@@ -18,7 +22,15 @@ const plugin: CmsEditorFieldRendererPlugin = {
         render(props) {
             const Bind = props.getBind();
             return (
-                <Bind>{bind => <ContentEntriesMultiAutocomplete {...props} bind={bind} />}</Bind>
+                <Bind>
+                    {bind => (
+                        <ContentEntriesMultiAutocomplete
+                            key={getKey(props.field, bind)}
+                            {...props}
+                            bind={bind}
+                        />
+                    )}
+                </Bind>
             );
         }
     }

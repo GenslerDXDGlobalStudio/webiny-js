@@ -1,8 +1,8 @@
 import React from "react";
 import cloneDeep from "lodash/cloneDeep";
-import { registerPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { Image } from "@webiny/ui/Image";
-import { PbEditorBlockPlugin } from "@webiny/app-page-builder/types";
+import { PbEditorBlockPlugin } from "../../types";
 
 type BlockElement = {
     id: string;
@@ -21,7 +21,7 @@ type BlockElement = {
 };
 
 export default (el: BlockElement) => {
-    registerPlugins({
+    plugins.register({
         id: el.id,
         name: "pb-saved-block-" + el.id,
         type: "pb-editor-block",

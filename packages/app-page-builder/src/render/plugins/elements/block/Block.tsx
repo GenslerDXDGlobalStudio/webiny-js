@@ -1,21 +1,34 @@
 import React from "react";
 import { css } from "emotion";
-import Element from "@webiny/app-page-builder/render/components/Element";
-import { ElementRoot } from "@webiny/app-page-builder/render/components/ElementRoot";
-import { PbElement } from "@webiny/app-page-builder/types";
-import ElementAnimation from "@webiny/app-page-builder/render/components/ElementAnimation";
+import kebabCase from "lodash/kebabCase";
+import Element from "../../../components/Element";
+import { ElementRoot } from "../../../components/ElementRoot";
+import { PbElement } from "../../../../types";
+import ElementAnimation from "../../../components/ElementAnimation";
 import { Interpolation } from "@emotion/core";
+import { PageBuilderContext, PageBuilderContextValue } from "../../../../contexts/PageBuilder";
 
 const Block = ({ element }: { element: PbElement }) => {
+    const {
+        responsiveDisplayMode: { displayMode }
+    } = React.useContext<PageBuilderContextValue>(PageBuilderContext);
     return (
         <ElementAnimation>
             <ElementRoot element={element}>
                 {({ elementStyle, elementAttributes, customClasses, combineClassNames }) => {
-                    const { width, alignItems, justifyContent, ...containerStyle } = elementStyle;
+                    const containerStyle = elementStyle;
+                    // Use per-device style
+                    const width = elementStyle[`--${kebabCase(displayMode)}-align-items`];
+                    /**
+                     * We're swapping "justifyContent" & "alignItems" value here because
+                     * ".webiny-pb-layout-block" has "flex-direction: column"
+                     */
+                    const alignItems = elementStyle[`--${kebabCase(displayMode)}-justify-content`];
+                    const justifyContent = elementStyle[`--${kebabCase(displayMode)}-align-items`];
 
                     return (
                         <div
-                            style={{ width: "100%", display: "flex", justifyContent: "center" }}
+                            style={{ width: "100%", display: "flex" }}
                             className={
                                 "webiny-pb-layout-block-container " +
                                 css(containerStyle as Interpolation)
@@ -24,9 +37,9 @@ const Block = ({ element }: { element: PbElement }) => {
                         >
                             <div
                                 style={{
-                                    width: width ? width : "100%",
-                                    alignSelf: justifyContent,
-                                    alignItems: alignItems
+                                    width,
+                                    justifyContent,
+                                    alignItems
                                 }}
                                 className={combineClassNames(
                                     "webiny-pb-layout-block webiny-pb-base-page-element-style",

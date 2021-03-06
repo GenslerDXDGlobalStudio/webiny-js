@@ -1,14 +1,17 @@
 import React from "react";
-import { Query } from "react-apollo";
+import { useQuery } from "@apollo/react-hooks";
 import { useRouter } from "@webiny/react-router";
 import styled from "@emotion/styled";
-import { Elevation } from "@webiny/ui/Elevation";
 import { renderPlugins } from "@webiny/app/plugins";
-import { GET_PAGE } from "@webiny/app-page-builder/admin/graphql/pages";
-import { PageDetailsProvider, PageDetailsConsumer } from "../../contexts/PageDetails";
-import { ElementAnimation } from "@webiny/app-page-builder/render/components";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { get } from "lodash";
+import { GET_PAGE } from "../../graphql/pages";
+import ElementAnimation from "../../../render/components/ElementAnimation";
+import { ButtonDefault, ButtonIcon } from "@webiny/ui/Button";
+import EmptyView from "@webiny/app-admin/components/EmptyView";
+import { i18n } from "@webiny/app/i18n";
+import { ReactComponent as AddIcon } from "@webiny/app-admin/assets/icons/add-18px.svg";
+
+const t = i18n.ns("app-page-builder/admin/views/pages/page-details");
 
 declare global {
     // eslint-disable-next-line
@@ -20,24 +23,6 @@ declare global {
         }
     }
 }
-
-const EmptySelect = styled("div")({
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "var(--mdc-theme-on-surface)",
-    ".select-page": {
-        maxWidth: 400,
-        padding: "50px 100px",
-        textAlign: "center",
-        display: "block",
-        borderRadius: 2,
-        backgroundColor: "var(--mdc-theme-surface)"
-    }
-});
-
 const DetailsContainer = styled("div")({
     height: "calc(100% - 10px)",
     overflow: "hidden",
@@ -46,68 +31,68 @@ const DetailsContainer = styled("div")({
         backgroundColor: "var(--mdc-theme-surface)"
     }
 });
-
-const EmptyPageDetails = () => {
+type EmptyPageDetailsProps = {
+    onCreatePage: (event?: React.SyntheticEvent) => void;
+    canCreate: boolean;
+};
+const EmptyPageDetails = ({ onCreatePage, canCreate }: EmptyPageDetailsProps) => {
     return (
-        <EmptySelect>
-            <Elevation z={2} className={"select-page"}>
-                Select a page on the left side, or click the green button to create a new one.
-            </Elevation>
-        </EmptySelect>
+        <EmptyView
+            title={t`Click on the left side list to display page details {message} `({
+                message: canCreate ? "or create a..." : ""
+            })}
+            action={
+                canCreate ? (
+                    <ButtonDefault data-testid="new-record-button" onClick={onCreatePage}>
+                        <ButtonIcon icon={<AddIcon />} /> {t`New Page`}
+                    </ButtonDefault>
+                ) : null
+            }
+        />
     );
 };
-
-const PageDetails = ({ refreshPages }) => {
+type PageDetailsProps = {
+    onCreatePage: (event?: React.SyntheticEvent) => void;
+    canCreate: boolean;
+};
+const PageDetails = ({ onCreatePage, canCreate }: PageDetailsProps) => {
     const { history, location } = useRouter();
     const { showSnackbar } = useSnackbar();
 
     const query = new URLSearchParams(location.search);
     const pageId = query.get("id");
 
+    const getPageQuery = useQuery(GET_PAGE, {
+        variables: { id: pageId },
+        skip: !pageId,
+        onCompleted: data => {
+            const error = data?.pageBuilder?.getPage?.error;
+            if (error) {
+                history.push("/page-builder/pages");
+                showSnackbar(error.message);
+            }
+        }
+    });
+
     if (!pageId) {
-        return <EmptyPageDetails />;
+        return <EmptyPageDetails canCreate={canCreate} onCreatePage={onCreatePage} />;
     }
 
+    const page = getPageQuery.data?.pageBuilder?.getPage?.data || {};
+
     return (
-        <Query
-            query={GET_PAGE()}
-            variables={{ id: pageId }}
-            onCompleted={data => {
-                const error = get(data, "pageBuilder.page.error.message");
-                if (error) {
-                    query.delete("id");
-                    history.push({ search: query.toString() });
-                    showSnackbar(error);
-                }
-            }}
-        >
-            {({ data, loading }) => {
-                const details = { page: get(data, "pageBuilder.page.data") || {}, loading };
-                return (
-                    <ElementAnimation>
-                        {({ refresh }) => (
-                            <DetailsContainer onScroll={refresh}>
-                                <PageDetailsProvider value={details}>
-                                    <PageDetailsConsumer>
-                                        {pageDetails => (
-                                            <React.Fragment>
-                                                <test-id data-testid="pb-page-details">
-                                                    {renderPlugins("pb-page-details", {
-                                                        refreshPages,
-                                                        pageDetails,
-                                                        loading
-                                                    })}
-                                                </test-id>
-                                            </React.Fragment>
-                                        )}
-                                    </PageDetailsConsumer>
-                                </PageDetailsProvider>
-                            </DetailsContainer>
-                        )}
-                    </ElementAnimation>
-                );
-            }}
-        </Query>
+        <ElementAnimation>
+            {({ refresh }) => (
+                <DetailsContainer onScroll={refresh}>
+                    <test-id data-testid="pb-page-details">
+                        {renderPlugins("pb-page-details", {
+                            page,
+                            getPageQuery
+                        })}
+                    </test-id>
+                </DetailsContainer>
+            )}
+        </ElementAnimation>
     );
 };
 

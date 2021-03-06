@@ -1,17 +1,72 @@
 import React from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import { useRecoilValue } from "recoil";
+import { useMutation } from "@apollo/react-hooks";
+import set from "lodash/set";
+import get from "lodash/get";
+import cloneDeep from "lodash/cloneDeep";
+import { useRouter } from "@webiny/react-router";
+import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
 import { ButtonPrimary } from "@webiny/ui/Button";
-import { getPage } from "@webiny/app-page-builder/editor/selectors";
-import { omit, isEqual } from "lodash";
-import { Mutation } from "react-apollo";
-import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { useRouter } from "@webiny/react-router";
-import { PUBLISH_REVISION } from "./PublishPageButton/graphql";
+import { GET_PAGE } from "../../../../admin/graphql/pages";
+import { pageAtom } from "../../../recoil/modules";
+import { PUBLISH_PAGE } from "./PublishPageButton/graphql";
+import usePermission from "../../../../hooks/usePermission";
 
-const PublishPageButton = ({ page }) => {
+const PublishPageButton: React.FunctionComponent = () => {
+    const page = useRecoilValue(pageAtom);
     const { history } = useRouter();
     const { showSnackbar } = useSnackbar();
+    const [publishRevision] = useMutation(PUBLISH_PAGE, {
+        refetchQueries: ["PbListPages"],
+        update: (cache, { data }) => {
+            // Don't do anything if there was an error during publishing!
+            if (data.pageBuilder.publishPage.error) {
+                return;
+            }
+
+            // Update revisions
+            let pageFromCache;
+            try {
+                pageFromCache = cloneDeep(
+                    cache.readQuery({
+                        query: GET_PAGE,
+                        variables: { id: page.id }
+                    })
+                );
+            } catch {
+                // This means page could not be found in the cache. Exiting...
+                return;
+            }
+
+            const revisions = get(pageFromCache, "pageBuilder.getPage.data.revisions", []);
+            revisions.forEach(r => {
+                // Update published/locked fields on the revision that was just published.
+                if (r.id === page.id) {
+                    r.status = "published";
+                    r.locked = true;
+                    return;
+                }
+
+                // Unpublish other published revisions
+                if (r.status === "published") {
+                    r.status = "unpublished";
+                }
+            });
+
+            // Write our data back to the cache.
+            cache.writeQuery({
+                query: GET_PAGE,
+                data: set(pageFromCache, "pageBuilder.getPage.data.revisions", revisions)
+            });
+        }
+    });
+    const { canPublish } = usePermission();
+
+    if (!canPublish()) {
+        return null;
+    }
+
     return (
         <ConfirmationDialog
             data-testid={"pb-editor-publish-confirmation-dialog"}
@@ -19,43 +74,34 @@ const PublishPageButton = ({ page }) => {
             message="You are about to publish this page, are you sure want to continue?"
         >
             {({ showConfirmation }) => (
-                <Mutation mutation={PUBLISH_REVISION} refetchQueries={["PbListPages"]}>
-                    {update => (
-                        <ButtonPrimary
-                            onClick={async () => {
-                                showConfirmation(async () => {
-                                    const response = await update({
-                                        variables: {
-                                            id: page.id
-                                        }
-                                    });
+                <ButtonPrimary
+                    onClick={async () => {
+                        showConfirmation(async () => {
+                            const response = await publishRevision({
+                                variables: {
+                                    id: page.id
+                                }
+                            });
 
-                                    const { error } = response.data.pageBuilder.publishRevision;
-                                    if (error) {
-                                        return showSnackbar(error.message);
-                                    }
+                            const { error } = response.data.pageBuilder.publishPage;
+                            if (error) {
+                                return showSnackbar(error.message);
+                            }
 
-                                    history.push(`/page-builder/pages?id=${page.id}`);
+                            history.push(`/page-builder/pages?id=${encodeURIComponent(page.id)}`);
 
-                                    // Let's wait a bit, because we are also redirecting the user.
-                                    setTimeout(() => {
-                                        showSnackbar("Your page was published successfully!");
-                                    }, 500);
-                                });
-                            }}
-                        >
-                            {page.version > 1 ? "Publish changes" : "Publish"}
-                        </ButtonPrimary>
-                    )}
-                </Mutation>
+                            // Let's wait a bit, because we are also redirecting the user.
+                            setTimeout(() => {
+                                showSnackbar("Your page was published successfully!");
+                            }, 500);
+                        });
+                    }}
+                >
+                    {page.version > 1 ? "Publish changes" : "Publish"}
+                </ButtonPrimary>
             )}
         </ConfirmationDialog>
     );
 };
 
-export default connect<any, any, any>(
-    state => ({ page: omit(getPage(state), ["content"]) }),
-    null,
-    null,
-    { areStatePropsEqual: isEqual }
-)(PublishPageButton);
+export default PublishPageButton;

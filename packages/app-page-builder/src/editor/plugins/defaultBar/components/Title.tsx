@@ -1,9 +1,9 @@
 import React, { useState, useCallback, SyntheticEvent } from "react";
-import slugify from "slugify";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { UpdatePageRevisionActionEvent } from "../../../recoil/actions";
+import { pageAtom, PageAtomType } from "../../../recoil/modules";
+import { useRecoilValue } from "recoil";
 import { Input } from "@webiny/ui/Input";
-import { updateRevision } from "@webiny/app-page-builder/editor/actions";
-import { getPage } from "@webiny/app-page-builder/editor/selectors";
 import { Tooltip } from "@webiny/ui/Tooltip";
 import { Typography } from "@webiny/ui/Typography";
 import {
@@ -21,32 +21,33 @@ declare global {
     }
 }
 
-type Props = {
-    title: string;
-    pageTitle: string;
-    pageCategoryUrl: string;
-    pageCategory: string;
-    pageLocked: boolean;
-    pageVersion: number;
-    updateRevision: (params: { title: string; history?: boolean }) => void;
-    editTitle: boolean;
-    enableEdit: Function;
-    setTitle: (title: string) => void;
-    onKeyDown: Function;
-    onBlur: Function;
+const extractPageInfo = (page: PageAtomType): any => {
+    const { title, version, locked, category } = page;
+    return {
+        pageTitle: title,
+        pageVersion: version,
+        pageLocked: locked,
+        pageCategory: category?.name,
+        pageCategoryUrl: category?.url
+    };
 };
 
-const Title = ({
-    pageTitle,
-    pageCategory,
-    pageCategoryUrl,
-    pageLocked,
-    pageVersion,
-    updateRevision
-}: Props) => {
-    const [editTitle, setEdit] = useState(false);
-    const [stateTitle, setTitle] = useState(null);
+const Title: React.FunctionComponent = () => {
+    const handler = useEventActionHandler();
+    const page = useRecoilValue(pageAtom);
+    const { pageTitle, pageVersion, pageLocked, pageCategory } = extractPageInfo(page);
+    const [editTitle, setEdit] = useState<boolean>(false);
+    const [stateTitle, setTitle] = useState<string>(null);
     let title = stateTitle === null ? pageTitle : stateTitle;
+
+    const updatePage = data => {
+        handler.trigger(
+            new UpdatePageRevisionActionEvent({
+                page: data
+            })
+        );
+    };
+
     const enableEdit = useCallback(() => setEdit(true), []);
 
     const onBlur = useCallback(() => {
@@ -55,7 +56,7 @@ const Title = ({
             setTitle(title);
         }
         setEdit(false);
-        updateRevision(getRevData({ title, pageTitle, pageCategoryUrl }));
+        updatePage({ title });
     }, [title]);
 
     const onKeyDown = useCallback(
@@ -76,7 +77,7 @@ const Title = ({
                     e.preventDefault();
                     setEdit(false);
 
-                    updateRevision(getRevData({ title, pageTitle, pageCategoryUrl }));
+                    updatePage({ title });
                     break;
                 default:
                     return;
@@ -123,31 +124,4 @@ const Title = ({
     );
 };
 
-const getRevData = ({ title, pageTitle, pageCategoryUrl }) => {
-    const newData: { title: string; url?: string } = { title };
-    if (pageTitle === "Untitled") {
-        newData.url =
-            pageCategoryUrl +
-            slugify(title, {
-                replacement: "-",
-                lower: true,
-                remove: /[*#\?<>_\{\}\[\]+~.()'"!:;@]/g
-            });
-    }
-
-    return newData;
-};
-
-export default connect<any, any, any>(
-    state => {
-        const { title, version, locked, category } = getPage(state);
-        return {
-            pageTitle: title,
-            pageVersion: version,
-            pageLocked: locked,
-            pageCategory: category.name,
-            pageCategoryUrl: category.url
-        };
-    },
-    { updateRevision }
-)(React.memo(Title));
+export default React.memo(Title);

@@ -1,22 +1,29 @@
 #!/usr/bin/env node
 "use strict";
 
-const chalk = require("chalk");
-const execa = require("execa");
 const semver = require("semver");
-const { verifyConfig } = require("./config");
+const chalk = require("chalk");
+const getYarnVersion = require("./utils/getYarnVersion");
+const verifyConfig = require("./utils/verifyConfig");
+
 const currentNodeVersion = process.versions.node;
 const majorVersion = parseInt(currentNodeVersion.split(".")[0]);
 const minorVersion = parseInt(currentNodeVersion.split(".")[1]);
 
+const NODE_VERSION_MIN_MAJOR = 10;
+const NODE_VERSION_MIN_MINOR = 14;
+
 (async () => {
-    if (majorVersion < 10 || (majorVersion === 10 && minorVersion < 14)) {
+    if (
+        majorVersion < NODE_VERSION_MIN_MAJOR ||
+        (majorVersion === NODE_VERSION_MIN_MAJOR && minorVersion < NODE_VERSION_MIN_MINOR)
+    ) {
         console.error(
             chalk.red(
                 "You are running Node " +
                     currentNodeVersion +
                     ".\n" +
-                    "Webiny requires Node 10.14 or higher. \n" +
+                    `Webiny requires Node ${NODE_VERSION_MIN_MAJOR}.${NODE_VERSION_MIN_MINOR} or higher. \n` +
                     "Please update your version of Node."
             )
         );
@@ -24,20 +31,22 @@ const minorVersion = parseInt(currentNodeVersion.split(".")[1]);
     }
 
     try {
-        const { stdout } = await execa("yarn", ["--version"]);
-        if (!semver.satisfies(stdout, "^1")) {
+        const yarnVersion = await getYarnVersion();
+        if (!semver.satisfies(yarnVersion, "^1.22.0 || ^2")) {
             console.error(
                 chalk.red(
-                    `Webiny currently only works with yarn@^1. yarn@^2 will be supported when the stable release is out.`
+                    `Webiny requires yarn@^1.22.0. Please run "npm install -g yarn" to update.`
                 )
             );
             process.exit(1);
         }
     } catch (err) {
         console.error(
-            chalk.red(`Webiny depends on "yarn@^1" and its built-in support for workspaces.`)
+            chalk.red(`Webiny depends on "yarn" and its built-in support for workspaces.`)
         );
-        console.log(`Please visit https://classic.yarnpkg.com to install "yarn@^1".`);
+
+        console.log(`Please visit https://yarnpkg.com/ to install ${chalk.green("yarn")}.`);
+
         process.exit(1);
     }
 

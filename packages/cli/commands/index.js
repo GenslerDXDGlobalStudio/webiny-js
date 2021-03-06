@@ -1,19 +1,8 @@
-const WEBINY = "webiny*";
-
-if (!process.env.DEBUG) {
-    process.env.DEBUG = WEBINY;
-}
-
-if (!process.env.DEBUG.includes(WEBINY)) {
-    process.env.DEBUG += `,${WEBINY}`;
-}
-
-const info = require("./info");
 const run = require("./run");
+const tracking = require("./tracking");
 
 module.exports.createCommands = (yargs, context) => {
-    context.plugins.register(run);
-    context.plugins.register(info);
+    context.plugins.register(run, tracking);
 
     context.loadUserPlugins();
 

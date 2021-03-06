@@ -1,10 +1,10 @@
 import React from "react";
 import SortableTree from "react-sortable-tree";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import MenuItemRenderer from "./MenuItemRenderer";
 import { Typography } from "@webiny/ui/Typography";
 import styled from "@emotion/styled";
-import { PbMenuItemPlugin } from "@webiny/app-page-builder/types";
+import { PbMenuItemPlugin } from "../../../../../types";
 
 const TreeWrapper = styled("div")({
     width: "100%",
@@ -25,13 +25,13 @@ const EmptyTree = styled("div")({
 
 class MenuItemsList extends React.Component<any> {
     static canHaveChildren(node) {
-        const plugins = getPlugins<PbMenuItemPlugin>("pb-menu-item");
-        const plugin = plugins.find(pl => pl.menuItem.type === node.type);
+        const pbMenuItemPlugins = plugins.byType<PbMenuItemPlugin>("pb-menu-item");
+        const plugin = pbMenuItemPlugins.find(pl => pl.menuItem.type === node.type);
         return plugin ? plugin.menuItem.canHaveChildren : false;
     }
 
     render() {
-        const { items, onChange, editItem, deleteItem } = this.props;
+        const { items, onChange, editItem, deleteItem, canSave } = this.props;
         const data = Array.isArray(items) ? [...items] : [];
 
         let dom = (
@@ -47,11 +47,12 @@ class MenuItemsList extends React.Component<any> {
                     canNodeHaveChildren={MenuItemsList.canHaveChildren}
                     nodeContentRenderer={MenuItemRenderer}
                     rowHeight={80}
+                    getNodeKey={({ node }) => node.id}
                     generateNodeProps={() => ({
                         editItem,
-                        deleteItem
+                        deleteItem,
+                        canSave
                     })}
-                    getNodeKey={({ node }) => node.id}
                 />
             );
         }

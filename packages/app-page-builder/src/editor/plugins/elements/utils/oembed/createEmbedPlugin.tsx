@@ -1,11 +1,13 @@
 import * as React from "react";
 import { BindComponent } from "@webiny/form";
-import OEmbed, { OEmbedProps } from "@webiny/app-page-builder/editor/components/OEmbed";
+import OEmbed, { OEmbedProps } from "../../../../components/OEmbed";
 import {
-    PbElement,
+    PbEditorElement,
     PbEditorPageElementPlugin,
-    PbEditorPageElementAdvancedSettingsPlugin
-} from "@webiny/app-page-builder/types";
+    PbEditorPageElementAdvancedSettingsPlugin,
+    DisplayMode
+} from "../../../../../types";
+import { createInitialPerDeviceSettingValue } from "../../../elementSettings/elementSettingsUtils";
 
 type EmbedPluginConfig = {
     type: string;
@@ -18,7 +20,8 @@ type EmbedPluginConfig = {
     oembed?: {
         global?: string;
         sdk?: string;
-        onData?: Function;
+        // onData?: Function;
+        onData?: (data: { [key: string]: any }) => { [key: string]: any };
         renderEmbed?: (props: OEmbedProps) => React.ReactElement;
         init?: (params: { node: HTMLElement }) => void;
     };
@@ -26,7 +29,7 @@ type EmbedPluginConfig = {
     target?: Array<string>;
     onCreate?: string;
     renderElementPreview?: (params: {
-        element: PbElement;
+        element: PbEditorElement;
         width: number;
         height: number;
     }) => React.ReactElement;
@@ -38,8 +41,8 @@ export const createEmbedPlugin = (config: EmbedPluginConfig): PbEditorPageElemen
         type: "pb-editor-page-element",
         elementType: config.type,
         toolbar: config.toolbar,
-        settings: config.settings || ["pb-editor-page-element-settings-delete", ""],
-        target: config.target || ["column", "row", "list-item"],
+        settings: config.settings || ["pb-editor-page-element-settings-delete"],
+        target: config.target || ["cell", "block", "list-item"],
         // eslint-disable-next-line
         create({ content = {}, ...options }) {
             return {
@@ -47,8 +50,14 @@ export const createEmbedPlugin = (config: EmbedPluginConfig): PbEditorPageElemen
                 elements: [],
                 data: {
                     settings: {
-                        margin: { desktop: { all: 0 }, mobile: { all: 0 } },
-                        padding: { desktop: { all: 0 }, mobile: { all: 0 } }
+                        margin: createInitialPerDeviceSettingValue(
+                            { all: "0px" },
+                            DisplayMode.DESKTOP
+                        ),
+                        padding: createInitialPerDeviceSettingValue(
+                            { all: "0px" },
+                            DisplayMode.DESKTOP
+                        )
                     }
                 },
                 ...options
@@ -68,7 +77,7 @@ export const createEmbedPlugin = (config: EmbedPluginConfig): PbEditorPageElemen
 
 type EmbedPluginSidebarConfig = {
     type: string;
-    render(params?: { Bind: BindComponent }): React.ReactElement;
+    render(params?: { Bind: BindComponent; submit: () => void }): React.ReactElement;
 };
 
 export const createEmbedSettingsPlugin = ({

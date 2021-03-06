@@ -1,69 +1,83 @@
-import React, { useState, useCallback } from "react";
-import { usePublishRevisionHandler } from "../../utils/usePublishRevisionHandler";
-import { usePageDetails } from "@webiny/app-page-builder/admin/hooks/usePageDetails";
-import PublishRevisionDialog from "./PublishRevisionDialog";
+import React, { useMemo } from "react";
 import { IconButton } from "@webiny/ui/Button";
 import { Tooltip } from "@webiny/ui/Tooltip";
-import { ReactComponent as PublishIcon } from "@webiny/app-page-builder/admin/assets/round-publish-24px.svg";
-import { get } from "lodash";
+import { useConfirmationDialog } from "@webiny/app-admin/hooks/useConfirmationDialog";
+import { i18n } from "@webiny/app/i18n";
+import { useSecurity } from "@webiny/app-security";
+import { ReactComponent as PublishIcon } from "../../../../assets/round-publish-24px.svg";
+import { ReactComponent as UnpublishIcon } from "../../../../assets/unpublish.svg";
+import { usePublishRevisionHandler } from "../../pageRevisions/usePublishRevisionHandler";
+import usePermission from "../../../../../hooks/usePermission";
 
-function getPublishSuggestion(page, revisions) {
-    if (!page.published) {
-        return page.id;
-    }
+const t = i18n.ns("app-headless-cms/app-page-builder/page-details/header/publish");
 
-    if (revisions[0]) {
-        return revisions[0].id;
-    }
+const PublishRevision = props => {
+    const { identity } = useSecurity();
+    const { canPublish, canUnpublish } = usePermission();
+    const { page } = props;
 
-    return "";
-}
+    const { publishRevision, unpublishRevision } = usePublishRevisionHandler({ page });
 
-function getPublishableRevisions(revisions) {
-    return revisions
-        .filter(r => !r.published)
-        .sort((a, b) => {
-            // @ts-ignore
-            return new Date(b.savedOn) - new Date(a.savedOn);
-        });
-}
+    const { showConfirmation: showPublishConfirmation } = useConfirmationDialog({
+        title: t`Publish page`,
+        message: (
+            <p>
+                {t`You are about to publish the {title} page. Are you sure you want to continue?`({
+                    title: <strong>{page.title}</strong>
+                })}
+            </p>
+        )
+    });
 
-const PublishRevision = () => {
-    const { page } = usePageDetails();
-    const { publishRevision } = usePublishRevisionHandler({ page });
-    const publishableRevisions = getPublishableRevisions(get(page, "revisions") || []);
-    const publishSuggestion = getPublishSuggestion(page, publishableRevisions);
-    const [openDialog, setOpenDialog] = useState(false);
+    const { showConfirmation: showUnpublishConfirmation } = useConfirmationDialog({
+        title: t`Unpublish page`,
+        message: (
+            <p>
+                {t`You are about to unpublish the {title} page. Are you sure you want to continue?`(
+                    {
+                        title: <strong>{page.title}</strong>
+                    }
+                )}
+            </p>
+        )
+    });
 
-    const showDialog = useCallback(() => setOpenDialog(true), []);
-    const hideDialog = useCallback(() => setOpenDialog(false), []);
-
-    const onSubmit = useCallback(
-        revision => {
-            hideDialog();
-            return publishRevision(revision);
-        },
-        [publishRevision]
-    );
-
-    if (!publishableRevisions.length) {
+    const pbPagePermission = useMemo(() => identity.getPermission("pb.page"), []);
+    if (!pbPagePermission) {
         return null;
     }
 
-    return (
-        <React.Fragment>
-            <Tooltip content={"Publish"} placement={"top"}>
-                <IconButton icon={<PublishIcon />} onClick={showDialog} />
+    if (page.status === "published" && canUnpublish()) {
+        return (
+            <Tooltip content={t`Unpublish`} placement={"top"}>
+                <IconButton
+                    icon={<UnpublishIcon />}
+                    onClick={() =>
+                        showUnpublishConfirmation(async () => {
+                            await unpublishRevision(page);
+                        })
+                    }
+                />
             </Tooltip>
-            <PublishRevisionDialog
-                open={openDialog}
-                onClose={hideDialog}
-                onSubmit={onSubmit}
-                selected={publishSuggestion}
-                revisions={publishableRevisions}
-            />
-        </React.Fragment>
-    );
+        );
+    }
+
+    if (canPublish()) {
+        return (
+            <Tooltip content={t`Publish`} placement={"top"}>
+                <IconButton
+                    icon={<PublishIcon />}
+                    onClick={() =>
+                        showPublishConfirmation(async () => {
+                            await publishRevision(page);
+                        })
+                    }
+                />
+            </Tooltip>
+        );
+    }
+
+    return null;
 };
 
 export default PublishRevision;

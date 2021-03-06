@@ -5,43 +5,32 @@ context("Menus Module", () => {
 
     it("should be able to create, edit, and immediately delete a menu", () => {
         const id = uniqid();
-        cy.visit("/page-builder/menus")
-            .findByLabelText("Name")
-            .type(`Cool Menu ${id}`)
-            .findByText("Save menu")
-            .click()
-            .findByText("Value is required.")
-            .should("exist")
-            .findByLabelText("Slug")
-            .type(`cool-menu-${id}`)
-            .findByLabelText("Description")
-            .type("This is a cool test.")
-            .findByText("Save menu")
-            .click();
+        cy.visit("/page-builder/menus");
+        cy.findByTestId("data-list-new-record-button").click();
 
-        cy.findByText("Record saved successfully.")
-            .should("exist")
-            .wait(500);
+        cy.findByLabelText("Name").type(`Cool Menu ${id}`);
+        cy.findByText("Save menu").click();
+        cy.findByText("Value is required.").should("exist");
+        cy.findByLabelText("Slug").type(`cool-menu-${id}`);
+        cy.findByLabelText("Description").type("This is a cool test.");
+        cy.findByText("Save menu").click();
 
-        cy.findByLabelText("Slug")
-            .should("be.disabled")
-            .findByLabelText("Description")
-            .type(" Test test.")
-            .findByText("Save menu")
-            .click();
+        cy.findByText("Menu saved successfully.").should("exist");
+        cy.wait(500);
 
-        cy.findByText("Record saved successfully.")
-            .should("exist")
-            .wait(500);
+        cy.findByLabelText("Slug").should("be.disabled");
+        cy.findByLabelText("Description").type(" Test test.");
+        cy.findByText("Save menu").click();
+
+        cy.findByText("Menu saved successfully.").should("exist");
+        cy.wait(500);
 
         cy.findByTestId("default-data-list").within(() => {
             cy.get("div")
                 .first()
                 .within(() => {
-                    cy.findByText(`Cool Menu ${id}`)
-                        .should("exist")
-                        .findByText("This is a cool test. Test test.")
-                        .should("exist");
+                    cy.findByText(`Cool Menu ${id}`).should("exist");
+                    cy.findByText("This is a cool test. Test test.").should("exist");
                     cy.get("button").click({ force: true });
                 });
         });
@@ -52,7 +41,8 @@ context("Menus Module", () => {
                 .within(() => cy.findByText("Confirm").click());
         });
 
-        cy.findByText("Record deleted successfully.").should("exist").wait(500);
+        cy.findByText(/Menu ".*" deleted\./).should("exist");
+        cy.wait(500);
         cy.findByTestId("default-data-list").within(() => {
             cy.findByText(`Cool Menu ${id}`).should("not.exist");
         });
@@ -60,34 +50,24 @@ context("Menus Module", () => {
 
     it("menus with the same slug should not be allowed - an error message must be shown", () => {
         const id = uniqid();
-        cy.visit("/page-builder/menus")
-            .findByLabelText("Name")
-            .type(`Cool Menu ${id}`)
-            .findByLabelText("Slug")
-            .type(`cool-menu-${id}`)
-            .findByText("Save menu")
-            .click();
+        cy.visit("/page-builder/menus");
+        cy.findByTestId("data-list-new-record-button").click();
 
-        cy.findByText("Record saved successfully.")
-            .should("exist")
-            .get(".react-spinner-material")
-            .should("not.exist")
-            .wait(500);
+        cy.findByLabelText("Name").type(`Cool Menu ${id}`);
+        cy.findByLabelText("Slug").type(`cool-menu-${id}`);
+        cy.findByText("Save menu").click();
 
-        cy.findByTestId("new-record-button")
-            .click()
-            .findByLabelText("Name")
-            .type(`Cool Menu ${id}`)
-            .findByText("Save menu")
-            .findByLabelText("Slug")
-            .type(`cool-menu-${id}`)
-            .findByText("Save menu")
-            .click();
+        cy.findByText("Menu saved successfully.").should("exist");
+        cy.get(".react-spinner-material").should("not.exist");
+        cy.wait(500);
 
-        cy.wait(500)
-            .get('[role="alertdialog"] :visible')
-            .within(() => {
-                cy.findByText(`Menu with slug "cool-menu-${id}" already exists.`).should("exist");
-            });
+        cy.findByTestId("data-list-new-record-button").click();
+        cy.findByLabelText("Name").type(`Cool Menu ${id}`);
+        cy.findByText("Save menu");
+        cy.findByLabelText("Slug").type(`cool-menu-${id}`);
+        cy.findByText("Save menu").click();
+
+        cy.wait(500);
+        cy.findByText(`Menu "cool-menu-${id}" already exists.`).should("exist");
     });
 });

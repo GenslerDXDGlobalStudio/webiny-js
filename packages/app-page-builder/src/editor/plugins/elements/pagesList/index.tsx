@@ -1,18 +1,18 @@
 import React from "react";
+import styled from "@emotion/styled";
+import { PluginCollection } from "@webiny/plugins/types";
 import {
     PbEditorPageElementPlugin,
-    PbEditorPageElementAdvancedSettingsPlugin
-} from "@webiny/app-page-builder/types";
-import { Tab } from "@webiny/ui/Tabs";
-import { ReactComponent as DesignIcon } from "./icons/round-style-24px.svg";
-import { ReactComponent as FilterIcon } from "./icons/round-filter_list-24px.svg";
+    PbEditorPageElementAdvancedSettingsPlugin,
+    DisplayMode
+} from "../../../../types";
+import { createInitialPerDeviceSettingValue } from "../../elementSettings/elementSettingsUtils";
 import { ReactComponent as PageListIcon } from "./page-list-icon.svg";
 import PagesList from "./PagesList";
 import PagesListFilterSettings from "./PagesListFilterSettings";
 import PagesListDesignSettings from "./PagesListDesignSettings";
-import styled from "@emotion/styled";
 
-export default () => {
+export default (): PluginCollection => {
     const PreviewBox = styled("div")({
         textAlign: "center",
         margin: "0 auto",
@@ -39,7 +39,7 @@ export default () => {
                 }
             },
             settings: ["pb-editor-page-element-settings-delete"],
-            target: ["row", "column"],
+            target: ["cell", "block"],
             onCreate: "open-settings",
             create(options = {}) {
                 return {
@@ -48,14 +48,14 @@ export default () => {
                         resultsPerPage: 10,
                         component: "default",
                         settings: {
-                            margin: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            },
-                            padding: {
-                                desktop: { all: 0 },
-                                mobile: { all: 0 }
-                            }
+                            margin: createInitialPerDeviceSettingValue(
+                                { all: "0px" },
+                                DisplayMode.DESKTOP
+                            ),
+                            padding: createInitialPerDeviceSettingValue(
+                                { all: "0px" },
+                                DisplayMode.DESKTOP
+                            )
                         }
                     },
                     ...options
@@ -70,11 +70,7 @@ export default () => {
             type: "pb-editor-page-element-advanced-settings",
             elementType: "pages-list",
             render(props) {
-                return (
-                    <Tab icon={<FilterIcon />} label="Filter">
-                        <PagesListFilterSettings {...props} />
-                    </Tab>
-                );
+                return <PagesListFilterSettings {...props} />;
             }
         } as PbEditorPageElementAdvancedSettingsPlugin,
         {
@@ -82,11 +78,7 @@ export default () => {
             type: "pb-editor-page-element-advanced-settings",
             elementType: "pages-list",
             render(props) {
-                return (
-                    <Tab icon={<DesignIcon />} label="Design">
-                        <PagesListDesignSettings {...props} />
-                    </Tab>
-                );
+                return <PagesListDesignSettings {...props} />;
             }
         } as PbEditorPageElementAdvancedSettingsPlugin
     ];

@@ -1,17 +1,23 @@
-import { CmsContentModel, CmsFieldTypePlugins, CmsContext } from "@webiny/api-headless-cms/types";
+import { CmsContentModel, CmsFieldTypePlugins, CmsContext, CmsContentEntry } from "../../../types";
+import { commonFieldResolvers } from "./resolvers/commonFieldResolvers";
+import { resolveGet } from "./resolvers/manage/resolveGet";
+import { resolveList } from "./resolvers/manage/resolveList";
+import { resolveGetRevisions } from "./resolvers/manage/resolveGetRevisions";
+import { resolveGetByIds } from "./resolvers/manage/resolveGetByIds";
+import { resolveCreate } from "./resolvers/manage/resolveCreate";
+import { resolveUpdate } from "./resolvers/manage/resolveUpdate";
+import { resolveRequestReview } from "./resolvers/manage/resolveRequestReview";
+import { resolveRequestChanges } from "./resolvers/manage/resolveRequestChanges";
+import { resolveDelete } from "./resolvers/manage/resolveDelete";
+import { resolvePublish } from "./resolvers/manage/resolvePublish";
+import { resolveUnpublish } from "./resolvers/manage/resolveUnpublish";
+import { resolveCreateFrom } from "./resolvers/manage/resolveCreateFrom";
 import { createManageTypeName, createTypeName } from "../utils/createTypeName";
-import { commonFieldResolvers } from "../utils/commonFieldResolvers";
-import { resolveGet } from "../utils/resolvers/resolveGet";
-import { resolveList } from "../utils/resolvers/resolveList";
-import { resolveCreate } from "../utils/resolvers/manage/resolveCreate";
-import { resolveUpdate } from "../utils/resolvers/manage/resolveUpdate";
-import { resolveDelete } from "../utils/resolvers/manage/resolveDelete";
-import { resolvePublish } from "../utils/resolvers/manage/resolvePublish";
-import { resolveUnpublish } from "../utils/resolvers/manage/resolveUnpublish";
-import { resolveCreateFrom } from "../utils/resolvers/manage/resolveCreateFrom";
 import { pluralizedTypeName } from "../utils/pluralizedTypeName";
+import { entryFieldFromStorageTransform } from "../utils/entryStorage";
+import get from "lodash/get";
 
-export interface CreateManageResolvers {
+interface CreateManageResolvers {
     (params: {
         models: CmsContentModel[];
         model: CmsContentModel;
@@ -19,6 +25,31 @@ export interface CreateManageResolvers {
         fieldTypePlugins: CmsFieldTypePlugins;
     }): any;
 }
+
+const getModelTitle = (model: CmsContentModel, entry: CmsContentEntry): string => {
+    if (!model.titleFieldId) {
+        return entry.id;
+    }
+    const titleValue = entry.values[model.titleFieldId];
+    if (!titleValue) {
+        return entry.id;
+    }
+    const field = model.fields.find(f => f.fieldId === model.titleFieldId);
+    if (!field) {
+        return titleValue;
+    }
+    const { enabled = false, values } = field.predefinedValues;
+    if (!enabled || Array.isArray(values) === false) {
+        return titleValue;
+    }
+    for (const value of values) {
+        // needs to be loose because titleValue can be a number and value can be a string - but it must match
+        if (value.value == titleValue) {
+            return value.label;
+        }
+    }
+    return titleValue;
+};
 
 export const createManageResolvers: CreateManageResolvers = ({
     models,
@@ -31,6 +62,8 @@ export const createManageResolvers: CreateManageResolvers = ({
     return {
         Query: {
             [`get${typeName}`]: resolveGet({ model }),
+            [`get${typeName}Revisions`]: resolveGetRevisions({ model }),
+            [`get${pluralizedTypeName(typeName)}ByIds`]: resolveGetByIds({ model }),
             [`list${pluralizedTypeName(typeName)}`]: resolveList({ model })
         },
         Mutation: {
@@ -39,19 +72,56 @@ export const createManageResolvers: CreateManageResolvers = ({
             [`delete${typeName}`]: resolveDelete({ model }),
             [`publish${typeName}`]: resolvePublish({ model }),
             [`unpublish${typeName}`]: resolveUnpublish({ model }),
-            [`create${typeName}From`]: resolveCreateFrom({ model })
+            [`create${typeName}From`]: resolveCreateFrom({ model }),
+            [`request${typeName}Review`]: resolveRequestReview({ model }),
+            [`request${typeName}Changes`]: resolveRequestChanges({ model })
         },
-        [mTypeName]: model.fields.reduce((resolvers, field) => {
-            const { manage } = fieldTypePlugins[field.type];
-            const resolver = manage.createResolver({ models, model, field });
+        [mTypeName]: model.fields.reduce(
+            (resolvers, field) => {
+                // Every time a client updates content model's fields, we check the type of each field. If a field plugin
+                // for a particular "field.type" doesn't exist on the backend yet, we throw an error. But still, we also
+                // want to be careful when accessing the field plugin here too. It is still possible to have a content model
+                // that contains a field, for which we don't have a plugin registered on the backend. For example, user
+                // could've just removed the plugin from the backend.
+                const createResolver = get(fieldTypePlugins, `${field.type}.manage.createResolver`);
+                const resolver = createResolver ? createResolver({ models, model, field }) : null;
 
-            resolvers[field.fieldId] = async (entry, args, ctx, info) => {
-                // If field-level locale is not specified, use context locale.
-                const locale = args.locale || ctx.cms.locale.code;
-                return await resolver(entry, { ...args, locale }, ctx, info);
-            };
+                resolvers[field.fieldId] = async (entry, args, context: CmsContext, info) => {
+                    // Get transformed value (eg. data decompression)
+                    entry.values[field.fieldId] = await entryFieldFromStorageTransform({
+                        context,
+                        model,
+                        entry,
+                        field,
+                        value: entry.values[field.fieldId]
+                    });
+                    if (!resolver) {
+                        return entry.values[field.fieldId];
+                    }
+                    return await resolver(entry, args, context, info);
+                };
 
-            return resolvers;
-        }, commonFieldResolvers())
+                return resolvers;
+            },
+            {
+                ...commonFieldResolvers(),
+                meta(entry) {
+                    return entry;
+                }
+            }
+        ),
+        [`${mTypeName}Meta`]: {
+            title(entry) {
+                return getModelTitle(model, entry);
+            },
+            status(entry) {
+                return entry.status;
+            },
+            async revisions(entry, args, context: CmsContext) {
+                const entryId = entry.id.split("#")[0];
+                const revisions = await context.cms.entries.getEntryRevisions(entryId);
+                return revisions.sort((a, b) => b.version - a.version);
+            }
+        }
     };
 };

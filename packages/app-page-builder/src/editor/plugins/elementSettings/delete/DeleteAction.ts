@@ -1,21 +1,35 @@
-import React from "react";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { getPlugins } from "@webiny/plugins";
-import { deleteElement } from "@webiny/app-page-builder/editor/actions";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
-import { PbEditorPageElementPlugin } from "@webiny/app-page-builder/types";
+import React, { useCallback } from "react";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { DeleteElementActionEvent } from "../../../recoil/actions";
+import { activeElementAtom, elementByIdSelector } from "../../../recoil/modules";
+import { plugins } from "@webiny/plugins";
+import { PbEditorPageElementPlugin } from "../../../../types";
+import { useRecoilValue } from "recoil";
 
-const DeleteAction = props => {
-    const { element, children } = props;
+type DeleteActionPropsType = {
+    children: React.ReactElement;
+};
+const DeleteAction: React.FunctionComponent<DeleteActionPropsType> = ({ children }) => {
+    const eventActionHandler = useEventActionHandler();
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementByIdSelector(activeElementId));
 
-    const onClick = useHandler(props, ({ element, deleteElement }) => () => {
-        deleteElement({ element });
-    });
+    if (!element) {
+        return null;
+    }
 
-    const plugin = getPlugins<PbEditorPageElementPlugin>("pb-editor-page-element").find(
-        pl => pl.elementType === element.type
-    );
+    const onClick = useCallback(() => {
+        eventActionHandler.trigger(
+            new DeleteElementActionEvent({
+                element
+            })
+        );
+    }, [activeElementId]);
+
+    const plugin = plugins
+        .byType<PbEditorPageElementPlugin>("pb-editor-page-element")
+        .find(pl => pl.elementType === element.type);
+
     if (!plugin) {
         return null;
     }
@@ -29,6 +43,4 @@ const DeleteAction = props => {
     return React.cloneElement(children, { onClick });
 };
 
-export default connect<any, any, any>(state => ({ element: getActiveElement(state) }), {
-    deleteElement
-})(DeleteAction);
+export default React.memo(DeleteAction);

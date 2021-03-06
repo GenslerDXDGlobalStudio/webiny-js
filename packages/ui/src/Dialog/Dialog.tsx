@@ -2,6 +2,7 @@ import * as React from "react";
 import ReactDOM from "react-dom";
 import {
     Dialog as RmwcDialog,
+    DialogProps as RmwcDialogProps,
     DialogOnCloseEventT,
     DialogContent as RmwcDialogContent,
     DialogContentProps as RmwcDialogContentProps,
@@ -12,11 +13,11 @@ import {
     DialogButton as RmwcDialogButton,
     DialogButtonProps as RmwcDialogButtonProps
 } from "@rmwc/dialog";
-import { getClasses } from "@webiny/ui/Helpers";
+import { getClasses } from "../Helpers";
 
 export type DialogOnClose = (event: DialogOnCloseEventT) => void;
 
-export type DialogProps = {
+export type DialogProps = RmwcDialogProps & {
     children: any;
 
     className?: string;

@@ -1,11 +1,10 @@
 import React from "react";
 import { css } from "emotion";
 import { Typography } from "@webiny/ui/Typography";
-import { I18NValue } from "@webiny/app-i18n/components";
 import { Dialog, DialogContent, DialogTitle, DialogCancel, DialogActions } from "@webiny/ui/Dialog";
 
 import { i18n } from "@webiny/app/i18n";
-import { FbFormSubmissionData } from "@webiny/app-form-builder/types";
+import { FbFormSubmissionData } from "../../../../../types";
 const t = i18n.namespace("FormEditor.FormSubmissionDialog");
 
 const dialogBody = css({
@@ -27,7 +26,7 @@ const getFieldValueLabel = (field, value) => {
     if (field.options.length > 0) {
         const selectedOption = field.options.find(option => option.value === value);
         if (selectedOption) {
-            return I18NValue(selectedOption.label);
+            return selectedOption.label;
         }
     }
 
@@ -51,9 +50,9 @@ const FormSubmissionDialog = ({ formSubmission, onClose }: Props) => {
 
                     <DialogContent className={dialogBody}>
                         <div>
-                            {formSubmission.form.revision.layout.map(row => {
+                            {formSubmission.form.layout.map(row => {
                                 return row.map(id => {
-                                    const field = formSubmission.form.revision.fields.find(
+                                    const field = formSubmission.form.fields.find(
                                         field => field._id === id
                                     );
 
@@ -65,9 +64,7 @@ const FormSubmissionDialog = ({ formSubmission, onClose }: Props) => {
                                                 width: `calc(100% / ${row.length})`
                                             }}
                                         >
-                                            <Typography use="overline">
-                                                {field.label.value}:{" "}
-                                            </Typography>
+                                            <Typography use="overline">{field.label}: </Typography>
                                             <Typography use="body1">
                                                 {field.type === "textarea" ? (
                                                     <pre>

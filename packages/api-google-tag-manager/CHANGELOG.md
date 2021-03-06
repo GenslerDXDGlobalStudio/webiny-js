@@ -3,6 +3,226 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [5.0.0-beta.4](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.3...v5.0.0-beta.4) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.3](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.2...v5.0.0-beta.3) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.2](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.1...v5.0.0-beta.2) (2021-01-29)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.1](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.0...v5.0.0-beta.1) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.0](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.0) (2021-01-08)
+
+
+### Bug Fixes
+
+* cleanup and small tweaks ([58aedcd](https://github.com/webiny/webiny-js/commit/58aedcdead2494b6ea012d19f72dfdf6a54795b7))
+* correct dependencies ([f77bd16](https://github.com/webiny/webiny-js/commit/f77bd161c7049212d55a05b1708f7053115f5638))
+* fix eslint errors ([f559a57](https://github.com/webiny/webiny-js/commit/f559a57522ab893120d8c686a2dd4caeb0c1ccb6))
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* remove `@webiny/commodo-graphql` ([c63988c](https://github.com/webiny/webiny-js/commit/c63988c264e708a427d2b5beeafa4ca317e0fdf2))
+* remove `@webiny/graphql` ([ce70fd5](https://github.com/webiny/webiny-js/commit/ce70fd581456ba56787c2e12fe8075592138a3b7))
+* remove `api-settings-manager` ([547d686](https://github.com/webiny/webiny-js/commit/547d68600132b28950ce6574041bd639f0e752ff))
+* remove no-longer-existing `resolveUpdateSettings` ([5493b75](https://github.com/webiny/webiny-js/commit/5493b7525c0159e864c2c86008f0f5e22eb3d192))
+* remove use of `gql` in `graphql-schema` plugins ([101e8fe](https://github.com/webiny/webiny-js/commit/101e8fe782e38644d686a1670cf938e3aa6a0c0c))
+* update dependencies ([9e23d9d](https://github.com/webiny/webiny-js/commit/9e23d9d435c8e3993713d73123a7b93119893eb1))
+* **code-format:** update configs for prettier and eslint ([#1237](https://github.com/webiny/webiny-js/issues/1237)) ([5ff6d22](https://github.com/webiny/webiny-js/commit/5ff6d22f427093a52560963770dadf96d8e6685b))
+
+
+
+
+
+# [5.0.0-beta.52](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.51...v5.0.0-beta.52) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.51](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.50...v5.0.0-beta.51) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.50](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.49...v5.0.0-beta.50) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.49](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.48...v5.0.0-beta.49) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.48](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.47...v5.0.0-beta.48) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.47](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.46...v5.0.0-beta.47) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.46](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.45...v5.0.0-beta.46) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.45](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.44...v5.0.0-beta.45) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.44](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.43...v5.0.0-beta.44) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.36](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.35...v5.0.0-beta.36) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.35](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.34...v5.0.0-beta.35) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.34](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.33...v5.0.0-beta.34) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.33](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.32...v5.0.0-beta.33) (2021-01-08)
+
+
+### Bug Fixes
+
+* cleanup and small tweaks ([58aedcd](https://github.com/webiny/webiny-js/commit/58aedcdead2494b6ea012d19f72dfdf6a54795b7))
+
+
+
+
+
+# [5.0.0-beta.32](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.31...v5.0.0-beta.32) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.31](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.30...v5.0.0-beta.31) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.30](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.29...v5.0.0-beta.30) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.29](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.28...v5.0.0-beta.29) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.28](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.27...v5.0.0-beta.28) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/api-google-tag-manager
+
+
+
+
+
+# [5.0.0-beta.10](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.10) (2021-01-04)
+
+
+### Bug Fixes
+
+* correct dependencies ([f77bd16](https://github.com/webiny/webiny-js/commit/f77bd161c7049212d55a05b1708f7053115f5638))
+* fix eslint errors ([f559a57](https://github.com/webiny/webiny-js/commit/f559a57522ab893120d8c686a2dd4caeb0c1ccb6))
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* remove `@webiny/commodo-graphql` ([c63988c](https://github.com/webiny/webiny-js/commit/c63988c264e708a427d2b5beeafa4ca317e0fdf2))
+* remove `@webiny/graphql` ([ce70fd5](https://github.com/webiny/webiny-js/commit/ce70fd581456ba56787c2e12fe8075592138a3b7))
+* remove `api-settings-manager` ([547d686](https://github.com/webiny/webiny-js/commit/547d68600132b28950ce6574041bd639f0e752ff))
+* remove no-longer-existing `resolveUpdateSettings` ([5493b75](https://github.com/webiny/webiny-js/commit/5493b7525c0159e864c2c86008f0f5e22eb3d192))
+* remove use of `gql` in `graphql-schema` plugins ([101e8fe](https://github.com/webiny/webiny-js/commit/101e8fe782e38644d686a1670cf938e3aa6a0c0c))
+* update dependencies ([9e23d9d](https://github.com/webiny/webiny-js/commit/9e23d9d435c8e3993713d73123a7b93119893eb1))
+* **code-format:** update configs for prettier and eslint ([#1237](https://github.com/webiny/webiny-js/issues/1237)) ([5ff6d22](https://github.com/webiny/webiny-js/commit/5ff6d22f427093a52560963770dadf96d8e6685b))
+
+
+
+
+
 # [4.14.0](https://github.com/webiny/webiny-js/compare/v4.14.0-beta.1...v4.14.0) (2020-10-30)
 
 **Note:** Version bump only for package @webiny/api-google-tag-manager

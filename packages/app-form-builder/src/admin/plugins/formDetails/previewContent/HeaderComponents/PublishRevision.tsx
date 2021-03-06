@@ -1,25 +1,27 @@
 import React from "react";
 import { IconButton } from "@webiny/ui/Button";
 import { Tooltip } from "@webiny/ui/Tooltip";
-import { ReactComponent as PublishIcon } from "@webiny/app-form-builder/admin/icons/publish.svg";
-import { ReactComponent as UnpublishIcon } from "@webiny/app-form-builder/admin/icons/unpublish.svg";
-import { PUBLISH_REVISION, UNPUBLISH_REVISION } from "@webiny/app-form-builder/admin/viewsGraphql";
+import { ReactComponent as PublishIcon } from "../../../../icons/publish.svg";
+import { ReactComponent as UnpublishIcon } from "../../../../icons/unpublish.svg";
+import { PUBLISH_REVISION, UNPUBLISH_REVISION } from "../../../../graphql";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
-import { useApolloClient } from "react-apollo";
+import { useApolloClient } from "@apollo/react-hooks";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { FbFormModel } from "@webiny/app-form-builder/types";
+import { FbRevisionModel } from "../../../../../types";
+import usePermission from "../../../../../hooks/usePermission";
 
 type PublishRevisionProps = {
-    revision: FbFormModel;
+    revision: FbRevisionModel;
 };
 
 const PublishRevision = ({ revision }: PublishRevisionProps) => {
     const { showSnackbar } = useSnackbar();
     const client = useApolloClient();
+    const { canPublish, canUnpublish } = usePermission();
 
     return (
         <React.Fragment>
-            {revision.status !== "published" ? (
+            {revision.status !== "published" && canPublish() && (
                 <Tooltip content={"Publish"} placement={"top"}>
                     <ConfirmationDialog
                         title={"Publish form"}
@@ -34,10 +36,10 @@ const PublishRevision = ({ revision }: PublishRevisionProps) => {
                                     showConfirmation(async () => {
                                         const { data: res } = await client.mutate({
                                             mutation: PUBLISH_REVISION,
-                                            variables: { id: revision.id }
+                                            variables: { revision: revision.id }
                                         });
 
-                                        const { error } = res.forms.publishRevision;
+                                        const { error } = res.formBuilder.publishRevision;
                                         if (error) {
                                             return showSnackbar(error.message);
                                         }
@@ -54,7 +56,8 @@ const PublishRevision = ({ revision }: PublishRevisionProps) => {
                         )}
                     </ConfirmationDialog>
                 </Tooltip>
-            ) : (
+            )}
+            {revision.status === "published" && canUnpublish() && (
                 <Tooltip content={"Unpublish"} placement={"top"}>
                     <ConfirmationDialog
                         title={"Un-publish form"}
@@ -69,10 +72,10 @@ const PublishRevision = ({ revision }: PublishRevisionProps) => {
                                     showConfirmation(async () => {
                                         const { data: res } = await client.mutate({
                                             mutation: UNPUBLISH_REVISION,
-                                            variables: { id: revision.id }
+                                            variables: { revision: revision.id }
                                         });
 
-                                        const { error } = res.forms.unpublishRevision;
+                                        const { error } = res.formBuilder.unpublishRevision;
                                         if (error) {
                                             return showSnackbar(error.message);
                                         }

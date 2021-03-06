@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import gql from "graphql-tag";
-import { useApolloClient } from "react-apollo";
+import { useApolloClient } from "@apollo/react-hooks";
 import { i18n } from "@webiny/app/i18n";
 import { Alert } from "@webiny/ui/Alert";
 import { CircularProgress } from "@webiny/ui/Progress";
@@ -16,7 +16,7 @@ const SimpleFormPlaceholder = styled.div({
 const t = i18n.ns("app-headless-cms/admin/installation");
 
 const IS_INSTALLED = gql`
-    {
+    query IsCMSInstalled {
         cms {
             isInstalled {
                 data
@@ -37,6 +37,7 @@ const INSTALL = gql`
                 error {
                     code
                     message
+                    data
                 }
             }
         }
@@ -64,14 +65,17 @@ const CMSInstaller = ({ onInstalled }) => {
             });
     }, []);
 
+    const label = error ? (
+        <Alert title={t`Something went wrong`} type={"danger"}>
+            {error}
+        </Alert>
+    ) : (
+        t`Installing Headless CMS...`
+    );
+
     return (
         <SimpleForm>
-            <CircularProgress label={t`Installing CMS...`} />
-            {error && (
-                <Alert title={t`Something went wrong`} type={"danger"}>
-                    {error}
-                </Alert>
-            )}
+            <CircularProgress label={label} />
             <SimpleFormContent>
                 <SimpleFormPlaceholder />
             </SimpleFormContent>
@@ -83,7 +87,7 @@ const plugin: AdminInstallationPlugin = {
     name: "admin-installation-cms",
     type: "admin-installation",
     title: t`Headless CMS`,
-    dependencies: [],
+    dependencies: ["admin-installation-security", "admin-installation-i18n"],
     secure: true,
     async isInstalled({ client }) {
         const { data } = await client.query({ query: IS_INSTALLED });

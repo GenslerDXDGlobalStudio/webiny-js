@@ -1,91 +1,93 @@
-import * as React from "react";
+import React, { useCallback } from "react";
+import { useRecoilState, useRecoilValue, useSetRecoilState } from "recoil";
 import { Transition } from "react-transition-group";
-import isEqual from "lodash/isEqual";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { getPlugins } from "@webiny/plugins";
+import { plugins } from "@webiny/plugins";
 import { renderPlugins } from "@webiny/app/plugins";
-import {
-    dragStart,
-    dragEnd,
-    activateElement,
-    highlightElement
-} from "@webiny/app-page-builder/editor/actions";
-import { getElementProps, getElement } from "@webiny/app-page-builder/editor/selectors";
+import { PbEditorPageElementPlugin, PbEditorElement } from "../../types";
 import Draggable from "./Draggable";
-import { PbElement, PbEditorPageElementPlugin } from "@webiny/app-page-builder/types";
+import tryRenderingPlugin from "../../utils/tryRenderingPlugin";
+import {
+    disableDraggingMutation,
+    elementByIdSelector,
+    enableDraggingMutation,
+    uiAtom,
+    activeElementAtom
+} from "../recoil/modules";
 import {
     defaultStyle,
     ElementContainer,
     transitionStyles,
     typeStyle
 } from "./Element/ElementStyled";
-import tryRenderingPlugin from "./../../utils/tryRenderingPlugin";
 
-export type ElementProps = {
+export type ElementPropsType = {
+    id: string;
     className?: string;
-    active: boolean;
-    dragStart: Function;
-    dragEnd: Function;
-    element: PbElement;
-    highlight: boolean;
-    onClick: Function;
-    onMouseOver: Function;
-    renderDraggable: Function;
-    beginDrag: Function;
-    endDrag: Function;
-    dragging: boolean;
+    isHighlighted: boolean;
+    isActive: boolean;
 };
 
-const getElementPlugin = (element): PbEditorPageElementPlugin => {
+const getElementPlugin = (element: PbEditorElement): PbEditorPageElementPlugin => {
     if (!element) {
         return null;
     }
 
-    const plugins = getPlugins<PbEditorPageElementPlugin>("pb-editor-page-element");
-    return plugins.find(pl => pl.elementType === element.type);
+    const pluginsByType = plugins.byType<PbEditorPageElementPlugin>("pb-editor-page-element");
+    return pluginsByType.find(pl => pl.elementType === element.type);
 };
 
-const Element = (props: ElementProps) => {
-    const { dragEnd, element, highlight, active, className = "" } = props;
+const ElementComponent: React.FunctionComponent<ElementPropsType> = ({
+    id: elementId,
+    className = "",
+    isActive
+}) => {
+    const [element, setElementAtomValue] = useRecoilState(elementByIdSelector(elementId));
+    const setUiAtomValue = useSetRecoilState(uiAtom);
+    const setActiveElementAtomValue = useSetRecoilState(activeElementAtom);
+    const { isHighlighted } = element;
+
     const plugin = getElementPlugin(element);
 
-    const beginDrag = useHandler(props, ({ dragStart, element }) => () => {
-        const data = { id: element.id, type: element.type, path: element.path };
+    const beginDrag = useCallback(() => {
+        const data = { id: element.id, type: element.type };
         setTimeout(() => {
-            dragStart({ element: data });
+            setUiAtomValue(enableDraggingMutation);
         });
         return { ...data, target: plugin.target };
-    });
+    }, [elementId]);
 
-    const endDrag = React.useCallback(
-        (props, monitor) => {
-            dragEnd({ element: monitor.getItem() });
+    const endDrag = useCallback(() => {
+        setUiAtomValue(disableDraggingMutation);
+    }, [elementId]);
+
+    const onClick = useCallback((): void => {
+        if (!element || element.type === "document" || isActive) {
+            return;
+        }
+        setActiveElementAtomValue(elementId);
+    }, [elementId, isActive]);
+
+    const onMouseOver = useCallback(
+        (ev): void => {
+            if (!element || element.type === "document") {
+                return;
+            }
+            ev.stopPropagation();
+            if (isHighlighted) {
+                return;
+            }
+            setElementAtomValue({ isHighlighted: true } as any);
         },
-        [dragEnd]
+        [elementId]
     );
-
-    const onClick = useHandler(props, ({ element, active, activateElement }) => () => {
-        if (element.type === "document") {
+    const onMouseOut = useCallback(() => {
+        if (!element || element.type === "document") {
             return;
         }
-        if (!active) {
-            activateElement({ element: element.id });
-        }
-    });
+        setElementAtomValue({ isHighlighted: false } as any);
+    }, [elementId]);
 
-    const onMouseOver = useHandler(props, ({ element, highlight, highlightElement }) => e => {
-        if (element.type === "document") {
-            return;
-        }
-
-        e.stopPropagation();
-        if (!highlight) {
-            highlightElement({ element: element.id });
-        }
-    });
-
-    const renderDraggable = useHandler(props, ({ element }) => ({ drag }) => {
+    const renderDraggable = ({ drag }): JSX.Element => {
         return (
             <div ref={drag} className={"type " + typeStyle}>
                 <div className="background" onClick={onClick} />
@@ -95,13 +97,20 @@ const Element = (props: ElementProps) => {
                 </div>
             </div>
         );
-    });
+    };
 
     if (!plugin) {
         return null;
     }
 
-    const renderedPlugin = tryRenderingPlugin(() => plugin.render({ element }));
+    const renderedPlugin = tryRenderingPlugin(() =>
+        plugin.render({
+            element,
+            isActive
+        })
+    );
+
+    const isDraggable = Array.isArray(plugin.target) && plugin.target.length > 0;
 
     return (
         <Transition in={true} timeout={250} appear={true}>
@@ -109,35 +118,36 @@ const Element = (props: ElementProps) => {
                 <ElementContainer
                     id={element.id}
                     onMouseOver={onMouseOver}
-                    highlight={highlight}
-                    active={active}
+                    onMouseOut={onMouseOut}
+                    highlight={isActive ? true : isHighlighted}
+                    active={isActive}
                     style={{ ...defaultStyle, ...transitionStyles[state] }}
                     className={"webiny-pb-page-element-container"}
                 >
                     <div className={["innerWrapper", className].filter(c => c).join(" ")}>
-                        <Draggable target={plugin.target} beginDrag={beginDrag} endDrag={endDrag}>
+                        <Draggable
+                            enabled={isDraggable}
+                            target={plugin.target}
+                            beginDrag={beginDrag}
+                            endDrag={endDrag}
+                        >
                             {renderDraggable}
                         </Draggable>
+
                         {renderedPlugin}
                     </div>
-                    {/*
-                        <div className="add-element add-element--above">+</div>
-                        <div className="add-element add-element--below">+</div>
-                        */}
                 </ElementContainer>
             )}
         </Transition>
     );
 };
 
-export default connect<any, any, any>(
-    (state, props) => {
-        return {
-            ...getElementProps(state, props),
-            element: getElement(state, props.id)
-        };
-    },
-    { dragStart, dragEnd, activateElement, highlightElement },
-    null,
-    { areStatePropsEqual: isEqual }
-)(React.memo(Element));
+const withHighlightElement = (Component: React.FunctionComponent) => {
+    return function withHighlightElementComponent(props) {
+        const activeElementAtomValue = useRecoilValue(activeElementAtom);
+
+        return <Component {...props} isActive={activeElementAtomValue === props.id} />;
+    };
+};
+
+export default withHighlightElement(React.memo<any>(ElementComponent));

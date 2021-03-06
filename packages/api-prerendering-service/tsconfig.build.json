@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "include": ["./src"],
+  "exclude": [
+    "node_modules",
+    "../plugins",
+    "../db",
+    "../handler",
+    "../handler-db",
+    "../handler-args",
+    "../handler-client",
+    "../error"
+  ],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
+  },
+  "references": []
+}

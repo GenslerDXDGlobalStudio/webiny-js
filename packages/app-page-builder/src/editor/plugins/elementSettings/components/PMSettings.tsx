@@ -1,63 +1,67 @@
 import React, { useMemo, useState } from "react";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { useHandler } from "@webiny/app/hooks/useHandler";
-import { Tabs, Tab } from "@webiny/ui/Tabs";
-import { get, isEqual } from "lodash";
-import { set, merge } from "dot-prop-immutable";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
-import { ReactComponent as BorderOuterIcon } from "@webiny/app-page-builder/editor/assets/icons/border_outer.svg";
-import { ReactComponent as BorderLeftIcon } from "@webiny/app-page-builder/editor/assets/icons/border_left.svg";
-import { ReactComponent as BorderRightIcon } from "@webiny/app-page-builder/editor/assets/icons/border_right.svg";
-import { ReactComponent as BorderTopIcon } from "@webiny/app-page-builder/editor/assets/icons/border_top.svg";
-import { ReactComponent as BorderBottomIcon } from "@webiny/app-page-builder/editor/assets/icons/border_bottom.svg";
 import SliderWithInput from "./SliderWithInput";
 import Footer from "./Footer";
+import { useEventActionHandler } from "../../../hooks/useEventActionHandler";
+import { UpdateElementActionEvent } from "../../../recoil/actions";
+import { activeElementAtom, elementWithChildrenByIdSelector } from "../../../recoil/modules";
+import { Tabs, Tab } from "@webiny/ui/Tabs";
+import { get } from "lodash";
+import { set, merge } from "dot-prop-immutable";
+import { ReactComponent as BorderOuterIcon } from "../../../assets/icons/border_outer.svg";
+import { ReactComponent as BorderLeftIcon } from "../../../assets/icons/border_left.svg";
+import { ReactComponent as BorderRightIcon } from "../../../assets/icons/border_right.svg";
+import { ReactComponent as BorderTopIcon } from "../../../assets/icons/border_top.svg";
+import { ReactComponent as BorderBottomIcon } from "../../../assets/icons/border_bottom.svg";
+import { useRecoilValue } from "recoil";
 
 /**
  * PMSettings (Padding/Margin settings).
  * This component is reused in Padding and Margin plugins since the behavior of both CSS attributes is the same.
  */
 
-type PMSettingsProps = {
-    value: any;
-    valueKey: string;
-    advanced: boolean;
+type PMSettingsPropsType = {
+    styleAttribute: string;
+    // TODO check - not used anywhere
+    title?: string;
 };
 
-const PMSettings = (props: PMSettingsProps) => {
-    const { advanced, valueKey } = props;
+const PMSettings: React.FunctionComponent<PMSettingsPropsType> = ({ styleAttribute }) => {
+    const handler = useEventActionHandler();
 
-    const [tabIndex, setTabIndex] = useState(0);
+    const valueKey = `data.settings.${styleAttribute}`;
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementWithChildrenByIdSelector(activeElementId));
+    const advanced = get(element, `${valueKey}.advanced`, false);
 
-    const updateSettings = useHandler(props, ({ element, updateElement }) => {
-        return (name: string, newValue: any, history = false) => {
-            const propName = `${valueKey}.${name}`;
+    const [tabIndex, setTabIndex] = useState<number>(0);
 
-            if (name !== "advanced") {
-                newValue = parseInt(newValue) || 0;
-            }
+    const updateSettings = (name: string, newValue: any, history = false) => {
+        const propName = `${valueKey}.${name}`;
 
-            let newElement = set(element, propName, newValue);
+        if (name !== "advanced") {
+            newValue = parseInt(newValue) || 0;
+        }
 
-            // Update all values in advanced settings
-            if (propName.endsWith(".all")) {
-                const prefix = propName.includes("desktop") ? "desktop" : "mobile";
-                newElement = merge(newElement, `${valueKey}.${prefix}`, {
-                    top: newValue,
-                    right: newValue,
-                    bottom: newValue,
-                    left: newValue
-                });
-            }
+        let newElement = set(element, propName, newValue);
 
-            updateElement({
-                element: newElement,
-                history,
-                merge: true
+        // Update all values in advanced settings
+        if (propName.endsWith(".all")) {
+            const prefix = propName.includes("desktop") ? "desktop" : "mobile";
+            newElement = merge(newElement, `${valueKey}.${prefix}`, {
+                top: newValue,
+                right: newValue,
+                bottom: newValue,
+                left: newValue
             });
-        };
-    });
+        }
+
+        handler.trigger(
+            new UpdateElementActionEvent({
+                element: newElement,
+                history
+            })
+        );
+    };
 
     const getUpdateValue = useMemo(() => {
         const handlers = {};
@@ -175,23 +179,4 @@ const PMSettings = (props: PMSettingsProps) => {
     );
 };
 
-export default connect<any, any, any>(
-    (state, { styleAttribute }: any) => {
-        const valueKey = "data.settings." + styleAttribute;
-        const element = getActiveElement(state);
-        return {
-            valueKey,
-            advanced: get(element, valueKey + ".advanced", false),
-            element: {
-                id: element.id,
-                type: element.type,
-                path: element.path
-            }
-        };
-    },
-    { updateElement },
-    null,
-    {
-        areStatePropsEqual: isEqual
-    }
-)(PMSettings);
+export default React.memo(PMSettings);

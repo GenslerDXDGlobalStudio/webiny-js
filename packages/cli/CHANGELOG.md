@@ -3,6 +3,249 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [5.0.0-beta.4](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.3...v5.0.0-beta.4) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.3](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.2...v5.0.0-beta.3) (2021-02-01)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.2](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.1...v5.0.0-beta.2) (2021-01-29)
+
+
+### Bug Fixes
+
+* **cli:** remove obsolete process.env.DEBUG variable ([9e282dd](https://github.com/webiny/webiny-js/commit/9e282dd1cdb145cdf1f25cc8bcf01a008266abae))
+* use CLI context for logging ([5f450ee](https://github.com/webiny/webiny-js/commit/5f450ee9bd722e30a277d34223f62ebe61054ed8))
+* **cli:** improve error logging and remove debug dependency ([4102830](https://github.com/webiny/webiny-js/commit/410283045d1f138fa801d606323eeec4d1d39578))
+
+
+
+
+
+# [5.0.0-beta.1](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.0...v5.0.0-beta.1) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.0](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.0) (2021-01-08)
+
+
+### Bug Fixes
+
+* add default value ([6888d92](https://github.com/webiny/webiny-js/commit/6888d920255e81905df042479c059577294ca527))
+* do not reload ENV files if already loaded ([b223268](https://github.com/webiny/webiny-js/commit/b223268d9a1989e5ba4c0ac9f9592d9eeca31685))
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* remove `info` command ([25f82fd](https://github.com/webiny/webiny-js/commit/25f82fd4580c8de7b0402f212542d0001c56ba55))
+* remove indenting ([771c1e6](https://github.com/webiny/webiny-js/commit/771c1e694730b42f58c2405f118d48f97816c870))
+* replace `env-cmd` with `dotenv` ([86662fc](https://github.com/webiny/webiny-js/commit/86662fcc82af8add6ffa73d270a239ac89cf280e))
+* update dependencies ([e32454c](https://github.com/webiny/webiny-js/commit/e32454c14c95f5a5f5ee4114126fd3b92020346c))
+* use dotenv ([c00fbe1](https://github.com/webiny/webiny-js/commit/c00fbe160587e50e429e452b759d66858061b866))
+
+
+### Features
+
+* add `getProjectRoot` utility function ([05eb94e](https://github.com/webiny/webiny-js/commit/05eb94e2d61b8be332c7b21c4e7b9cd33f8e9ea9))
+* improve error messaging when loading env files ([d48df8a](https://github.com/webiny/webiny-js/commit/d48df8a6e95e179d810ec89455e87849139417c6))
+
+
+
+
+
+# [5.0.0-beta.52](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.51...v5.0.0-beta.52) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.51](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.50...v5.0.0-beta.51) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.50](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.49...v5.0.0-beta.50) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.49](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.48...v5.0.0-beta.49) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.48](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.47...v5.0.0-beta.48) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.47](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.46...v5.0.0-beta.47) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.46](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.45...v5.0.0-beta.46) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.45](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.44...v5.0.0-beta.45) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.44](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.43...v5.0.0-beta.44) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.36](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.35...v5.0.0-beta.36) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.35](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.34...v5.0.0-beta.35) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.34](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.33...v5.0.0-beta.34) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.33](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.32...v5.0.0-beta.33) (2021-01-08)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.32](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.31...v5.0.0-beta.32) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.31](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.30...v5.0.0-beta.31) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.30](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.29...v5.0.0-beta.30) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.29](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.28...v5.0.0-beta.29) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.28](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.27...v5.0.0-beta.28) (2021-01-06)
+
+**Note:** Version bump only for package @webiny/cli
+
+
+
+
+
+# [5.0.0-beta.26](https://github.com/webiny/webiny-js/compare/v5.0.0-beta.25...v5.0.0-beta.26) (2021-01-06)
+
+
+### Bug Fixes
+
+* do not reload ENV files if already loaded ([b223268](https://github.com/webiny/webiny-js/commit/b223268d9a1989e5ba4c0ac9f9592d9eeca31685))
+* remove `info` command ([25f82fd](https://github.com/webiny/webiny-js/commit/25f82fd4580c8de7b0402f212542d0001c56ba55))
+* replace `env-cmd` with `dotenv` ([86662fc](https://github.com/webiny/webiny-js/commit/86662fcc82af8add6ffa73d270a239ac89cf280e))
+* use dotenv ([c00fbe1](https://github.com/webiny/webiny-js/commit/c00fbe160587e50e429e452b759d66858061b866))
+
+
+### Features
+
+* add `getProjectRoot` utility function ([05eb94e](https://github.com/webiny/webiny-js/commit/05eb94e2d61b8be332c7b21c4e7b9cd33f8e9ea9))
+
+
+
+
+
+# [5.0.0-beta.10](https://github.com/webiny/webiny-js/compare/v4.14.0...v5.0.0-beta.10) (2021-01-04)
+
+
+### Bug Fixes
+
+* add default value ([6888d92](https://github.com/webiny/webiny-js/commit/6888d920255e81905df042479c059577294ca527))
+* merge `new-security` into `master` ([da26908](https://github.com/webiny/webiny-js/commit/da269089ebaf18cc00c43919688fc4a005314d72))
+* remove indenting ([771c1e6](https://github.com/webiny/webiny-js/commit/771c1e694730b42f58c2405f118d48f97816c870))
+* update dependencies ([e32454c](https://github.com/webiny/webiny-js/commit/e32454c14c95f5a5f5ee4114126fd3b92020346c))
+
+
+### Features
+
+* improve error messaging when loading env files ([d48df8a](https://github.com/webiny/webiny-js/commit/d48df8a6e95e179d810ec89455e87849139417c6))
+
+
+
+
+
 # [4.14.0](https://github.com/webiny/webiny-js/compare/v4.14.0-beta.1...v4.14.0) (2020-10-30)
 
 **Note:** Version bump only for package @webiny/cli

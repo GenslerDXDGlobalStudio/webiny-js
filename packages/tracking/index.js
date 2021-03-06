@@ -15,7 +15,7 @@ const getConfig = async () => {
                 config.id = "unknown";
             }
         } catch (e) {
-            config = { id: "unknown", tracking: true };
+            config = { id: "unknown" };
         }
     }
     return config;
@@ -24,15 +24,17 @@ const getConfig = async () => {
 module.exports.sendEvent = async ({ event, data }) => {
     const config = await getConfig();
 
+    if (config.tracking === false) {
+        return;
+    }
+
     data = data || {};
     if (!data.version) {
         data.version = require("./package.json").version;
     }
 
     const payload = {
-        // eslint-disable-next-line @typescript-eslint/camelcase
         api_key: API_KEY,
-        // eslint-disable-next-line @typescript-eslint/camelcase
         distinct_id: config.id,
         event,
         properties: data,

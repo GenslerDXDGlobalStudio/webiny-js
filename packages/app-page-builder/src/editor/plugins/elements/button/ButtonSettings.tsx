@@ -1,145 +1,144 @@
-import React, { useCallback, useMemo } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-import { getPlugins } from "@webiny/plugins";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { set } from "dot-prop-immutable";
-import { get, isEqual } from "lodash";
-import { Tabs, Tab } from "@webiny/ui/Tabs";
-import { Select } from "@webiny/ui/Select";
-import { Grid, Cell } from "@webiny/ui/Grid";
-import { Typography } from "@webiny/ui/Typography";
-import { usePageBuilder } from "@webiny/app-page-builder/hooks/usePageBuilder";
-import { updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
-import Input from "@webiny/app-page-builder/editor/plugins/elementSettings/components/Input";
-import ColorPicker from "@webiny/app-page-builder/editor/plugins/elementSettings/components/ColorPicker";
-import IconPicker from "@webiny/app-page-builder/editor/plugins/elementSettings/components/IconPicker";
-import { PbIcon, PbIconsPlugin } from "@webiny/app-page-builder/types";
+import React, { useCallback } from "react";
+import { useRecoilValue } from "recoil";
+import { css } from "emotion";
+import { usePageBuilder } from "../../../../hooks/usePageBuilder";
+import { activeElementAtom, elementWithChildrenByIdSelector } from "../../../recoil/modules";
+import { PbEditorPageElementSettingsRenderComponentProps } from "../../../../types";
+// Components
+import IconPickerComponent from "../../../components/IconPicker";
+import Accordion from "../../elementSettings/components/Accordion";
+import { BaseColorPicker } from "../../elementSettings/components/ColorPicker";
+import { ContentWrapper } from "../../elementSettings/components/StyledComponents";
+import Wrapper from "../../elementSettings/components/Wrapper";
+import InputField from "../../elementSettings/components/InputField";
+import SelectField from "../../elementSettings/components/SelectField";
+import { updateButtonElementIcon } from "../utils/iconUtils";
+import useUpdateHandlers from "../../elementSettings/useUpdateHandlers";
 
-const ButtonSettings = ({ element, updateElement }) => {
+const classes = {
+    gridClass: css({
+        "&.mdc-layout-grid": {
+            padding: 0,
+            margin: 0,
+            marginBottom: 24
+        }
+    }),
+    row: css({
+        display: "flex",
+        "& > div": {
+            width: "50%",
+            background: "beige"
+        },
+
+        "& .icon-picker-handler": {
+            width: "100%",
+            backgroundColor: "var(--webiny-theme-color-background)",
+            "& svg": {
+                width: 24,
+                height: 24
+            }
+        },
+        "& .color-picker-handler": {
+            width: "100%",
+            backgroundColor: "var(--webiny-theme-color-background)",
+            "& > div": {
+                width: "100%"
+            }
+        }
+    })
+};
+
+const ButtonSettings: React.FunctionComponent<PbEditorPageElementSettingsRenderComponentProps> = ({
+    defaultAccordionValue
+}) => {
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementWithChildrenByIdSelector(activeElementId));
     const { theme } = usePageBuilder();
-    const { types } = get(theme, "elements.button", []);
-    const { type = get(types, "0.name", ""), icon = {} } = get(element, "data", {});
+    const { types } = theme?.elements?.button || [];
+    const defaultType = types?.[0]?.name || "";
+    const { type = defaultType, icon = { width: 36 } } = element.data || {};
 
-    const setData = useMemo(() => {
-        const historyUpdated = {};
+    const { getUpdateValue, getUpdatePreview } = useUpdateHandlers({
+        element,
+        dataNamespace: "data",
+        postModifyElement: updateButtonElementIcon
+    });
 
-        return (name, value, history = true) => {
-            const attrKey = `data.${name}`;
-
-            const newElement = set(element, attrKey, value);
-            const isIcon = name.startsWith("icon");
-            if (isIcon) {
-                const { id, width, color } = newElement.data?.icon || {};
-
-                const isSelectedIcon =
-                    icon.id && id ? icon.id[0] === id[0] && icon.id[1] === id[1] : false;
-
-                const updatedIcon = isSelectedIcon ? {} : newElement.data.icon || {};
-
-                newElement.data.icon = {
-                    ...updatedIcon,
-                    svg: id && !isSelectedIcon ? getSvg(id, { width, color }) : undefined
-                };
-            }
-
-            if (!history) {
-                updateElement({ element: newElement, history });
-                return;
-            }
-
-            if (historyUpdated[name] !== value || (value === undefined && isIcon)) {
-                historyUpdated[name] = value;
-                updateElement({ element: newElement });
-            }
-        };
-    }, [element, updateElement]);
-
-    const updateType = useCallback(value => setData("type", value), [setData]);
-    const updateIcon = useCallback(value => setData("icon.id", value?.id), [setData]);
-    const updateIconColor = useCallback((value: string) => setData("icon.color", value), [setData]);
-    const updateIconColorPreview = useCallback(
-        (value: string) => setData("icon.color", value, false),
-        [setData]
-    );
-    const updateIconWidth = useCallback((value: string) => setData("icon.width", value), [setData]);
-    const updateIconPosition = useCallback((value: string) => setData("icon.position", value), [
-        setData
+    const updateType = useCallback(value => getUpdateValue("type")(value), [getUpdateValue]);
+    const updateIcon = useCallback(value => getUpdateValue("icon.id")(value?.id), [getUpdateValue]);
+    const updateIconColor = useCallback((value: string) => getUpdateValue("icon.color")(value), [
+        getUpdateValue
     ]);
+    const updateIconColorPreview = useCallback(
+        (value: string) => getUpdatePreview("icon.color")(value),
+        [getUpdatePreview]
+    );
+    const updateIconWidth = useCallback((value: string) => getUpdateValue("icon.width")(value), [
+        getUpdateValue
+    ]);
+    const updateIconPosition = useCallback(
+        (value: string) => getUpdateValue("icon.position")(value),
+        [getUpdateValue]
+    );
+    const removeIcon = useCallback(() => getUpdateValue("icon")({ id: null }), [getUpdateValue]);
 
     return (
-        <React.Fragment>
-            <Tabs>
-                <Tab label={"Button"}>
-                    <Grid>
-                        <Cell span={6}>
-                            <Typography use={"overline"}>Type</Typography>
-                        </Cell>
-                        <Cell span={6}>
-                            <Select value={type} onChange={updateType}>
-                                {types.map(type => (
-                                    <option key={type.className} value={type.className}>
-                                        {type.label}
-                                    </option>
-                                ))}
-                            </Select>
-                        </Cell>
-                    </Grid>
-                </Tab>
-                <Tab label={"Icon"}>
-                    <IconPicker label={"Icon"} value={icon?.id} updateValue={updateIcon} />
-                    <Input
-                        label={"Width"}
-                        value={icon?.width || 50}
-                        updateValue={updateIconWidth}
+        <Accordion title={"Button"} defaultValue={defaultAccordionValue}>
+            <ContentWrapper direction={"column"}>
+                <Wrapper label={"Type"} containerClassName={classes.gridClass}>
+                    <SelectField value={type} onChange={updateType}>
+                        {types.map(type => (
+                            <option key={type.className} value={type.className}>
+                                {type.label}
+                            </option>
+                        ))}
+                    </SelectField>
+                </Wrapper>
+                <Wrapper label={"Icon"} containerClassName={classes.gridClass}>
+                    <IconPickerComponent
+                        handlerClassName={"icon-picker-handler"}
+                        value={icon?.id}
+                        onChange={updateIcon}
+                        removeIcon={removeIcon}
+                        useInSidebar={true}
                     />
-                    <ColorPicker
-                        label={"Color"}
+                </Wrapper>
+                <Wrapper label={"Icon color"} containerClassName={classes.gridClass}>
+                    <BaseColorPicker
+                        handlerClassName={"color-picker-handler"}
                         value={icon?.color}
                         updateValue={updateIconColor}
                         updatePreview={updateIconColorPreview}
                     />
-                    <Grid>
-                        <Cell span={6}>
-                            <Typography use={"overline"}>Position</Typography>
-                        </Cell>
-                        <Cell span={6}>
-                            <Select value={icon?.position || "left"} onChange={updateIconPosition}>
-                                <option value={"left"}>Left</option>
-                                <option value={"right"}>Right</option>
-                                <option value={"top"}>Top</option>
-                                <option value={"bottom"}>Bottom</option>
-                            </Select>
-                        </Cell>
-                    </Grid>
-                </Tab>
-            </Tabs>
-        </React.Fragment>
+                </Wrapper>
+                <Wrapper
+                    label={"Icon width"}
+                    containerClassName={classes.gridClass}
+                    leftCellSpan={8}
+                    rightCellSpan={4}
+                >
+                    <InputField
+                        placeholder={"Width"}
+                        value={icon?.width}
+                        onChange={updateIconWidth}
+                    />
+                </Wrapper>
+                <Wrapper
+                    label={"Icon position"}
+                    containerClassName={classes.gridClass}
+                    leftCellSpan={8}
+                    rightCellSpan={4}
+                >
+                    <SelectField value={icon?.position || "left"} onChange={updateIconPosition}>
+                        <option value={"left"}>Left</option>
+                        <option value={"right"}>Right</option>
+                        <option value={"top"}>Top</option>
+                        <option value={"bottom"}>Bottom</option>
+                    </SelectField>
+                </Wrapper>
+            </ContentWrapper>
+        </Accordion>
     );
 };
 
-let icons;
-const getIcons = (): PbIcon[] => {
-    if (!icons) {
-        const plugins = getPlugins<PbIconsPlugin>("pb-icons");
-        icons = plugins.reduce((icons, pl) => {
-            return icons.concat(pl.getIcons());
-        }, []);
-    }
-    return icons;
-};
-
-const getSvg = (id: string[], props: any = {}) => {
-    if (!props.width) {
-        props.width = 50;
-    }
-    const icon: PbIcon = getIcons().find(ic => isEqual(ic.id, id));
-    if (!icon) {
-        return null;
-    }
-    return renderToStaticMarkup(React.cloneElement(icon.svg, props));
-};
-
-export default connect<any, any, any>(state => ({ element: getActiveElement(state) }), {
-    updateElement
-})(React.memo(ButtonSettings));
+export default ButtonSettings;

@@ -4,7 +4,7 @@ import { Input } from "@webiny/ui/Input";
 import { Typography } from "@webiny/ui/Typography";
 import { Grid, Cell } from "@webiny/ui/Grid";
 import { ButtonSecondary, ButtonPrimary } from "@webiny/ui/Button";
-import { PagesAutocomplete } from "@webiny/app-page-builder/admin/components/PagesAutocomplete";
+import { PagesAutocomplete } from "../../../components/PagesAutocomplete";
 import { Elevation } from "@webiny/ui/Elevation";
 import { validation } from "@webiny/validation";
 
@@ -35,7 +35,9 @@ const LinkForm = ({ data, onSubmit, onCancel }) => {
                                                 onChange(value);
                                                 if (!data.title) {
                                                     form.setState(state => {
-                                                        state.data.title = selection.title;
+                                                        if (selection) {
+                                                            state.data.title = selection.title;
+                                                        }
                                                     });
                                                 }
                                             }}

@@ -3,7 +3,7 @@ import { renderPlugins } from "@webiny/app/plugins";
 import {
     PbPageDetailsRevisionContentPlugin,
     PbPageDetailsRevisionContentPreviewPlugin
-} from "@webiny/app-page-builder/types";
+} from "../../../../types";
 import { Tab } from "@webiny/ui/Tabs";
 import styled from "@emotion/styled";
 import { Elevation } from "@webiny/ui/Elevation";
@@ -15,7 +15,7 @@ const RenderBlock = styled("div")({
     zIndex: 0,
     backgroundColor: "var(--mdc-theme-background)",
     height: "100%",
-    overflow: "scroll",
+    overflow: "auto",
     padding: 25
 });
 
@@ -23,17 +23,16 @@ const plugins = [
     {
         name: "pb-page-details-revision-content-preview",
         type: "pb-page-details-revision-content",
-        render({ pageDetails, loading, refreshPages }) {
+        render(props) {
+            const { getPageQuery } = props;
+
             return (
-                <Tab label={"Page preview"} disabled={loading}>
+                <Tab label={"Page preview"} disabled={getPageQuery.loading}>
                     <RenderBlock>
                         <Elevation z={2}>
                             <div style={{ position: "relative" }}>
-                                {loading && <CircularProgress />}
-                                {renderPlugins("pb-page-details-revision-content-preview", {
-                                    pageDetails,
-                                    refreshPages
-                                })}
+                                {getPageQuery.loading && <CircularProgress />}
+                                {renderPlugins("pb-page-details-revision-content-preview", props)}
                             </div>
                         </Elevation>
                     </RenderBlock>
@@ -44,8 +43,8 @@ const plugins = [
     {
         name: "pb-page-details-revision-preview",
         type: "pb-page-details-revision-content-preview",
-        render({ pageDetails }) {
-            return <PagePreview pageDetails={pageDetails} />;
+        render(props) {
+            return <PagePreview {...props} />;
         }
     } as PbPageDetailsRevisionContentPreviewPlugin
 ];

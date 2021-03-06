@@ -3,23 +3,22 @@
   "include": ["src"],
   "exclude": [
     "node_modules",
-    "../graphql",
-    "../api-plugin-commodo-db-proxy",
     "../api-security",
-    "../commodo",
-    "../commodo-graphql",
-    "../validation"
+    "../api-security-tenancy",
+    "../plugins",
+    "../handler",
+    "../handler-aws",
+    "../handler-graphql",
+    "../handler-client",
+    "../handler-db",
+    "../db-dynamodb"
   ],
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "declarationDir": "dist"
+    "declarationDir": "dist",
+    "paths": {},
+    "baseUrl": "."
   },
-  "references": [
-    { "path": "../graphql/tsconfig.build.json" },
-    { "path": "../api-plugin-commodo-db-proxy/tsconfig.build.json" },
-    { "path": "../api-security/tsconfig.build.json" },
-    { "path": "../commodo-graphql/tsconfig.build.json" },
-    { "path": "../validation/tsconfig.build.json" }
-  ]
+  "references": []
 }

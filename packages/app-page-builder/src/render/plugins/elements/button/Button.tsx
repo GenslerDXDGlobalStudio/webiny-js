@@ -1,14 +1,16 @@
 import React from "react";
-import { get } from "dot-prop-immutable";
-import Slate from "@webiny/app-page-builder/render/components/Slate";
-import { ElementRoot } from "@webiny/app-page-builder/render/components/ElementRoot";
-import { PbElement } from "@webiny/app-page-builder/types";
+import kebabCase from "lodash/kebabCase";
+import { ElementRoot } from "../../../components/ElementRoot";
+import { PbElement } from "../../../../types";
 import { Link } from "@webiny/react-router";
+import { PageBuilderContext, PageBuilderContextValue } from "../../../../contexts/PageBuilder";
 
 const Button = ({ element }: { element: PbElement }) => {
+    const {
+        responsiveDisplayMode: { displayMode }
+    } = React.useContext<PageBuilderContextValue>(PageBuilderContext);
     const { type = "default", icon = {}, link = {} } = element.data || {};
     const { svg = null } = icon;
-    const alignItems = get(element, "data.settings.horizontalAlignFlex") || "flex-start";
     const { position = "left" } = icon;
 
     const classes = [
@@ -21,26 +23,34 @@ const Button = ({ element }: { element: PbElement }) => {
     const content = (
         <>
             {svg && <span dangerouslySetInnerHTML={{ __html: svg }} />}
-            <Slate value={element.data.text} />
+            <p>{element.data.buttonText}</p>
         </>
     );
 
     return (
-        <ElementRoot element={element}>
-            {({ getAllClasses, elementStyle, elementAttributes }) => (
-                <div
-                    style={{ ...elementStyle, display: "flex", justifyContent: alignItems }}
-                    {...elementAttributes}
-                >
-                    <Link
-                        to={link.href || null}
-                        target={link.newTab ? "_blank" : "_self"}
-                        className={getAllClasses(...classes)}
-                    >
-                        {content}
-                    </Link>
-                </div>
-            )}
+        <ElementRoot className={"webiny-pb-base-page-element-style"} element={element}>
+            {({ getAllClasses, elementStyle, elementAttributes }) => {
+                // Use per-device style
+                const justifyContent = elementStyle[`--${kebabCase(displayMode)}-justify-content`];
+
+                return (
+                    <div style={{ display: "flex", justifyContent }}>
+                        <Link
+                            to={link.href || "/"}
+                            target={link.newTab ? "_blank" : "_self"}
+                            style={
+                                !link.href
+                                    ? { ...elementStyle, pointerEvents: "none" }
+                                    : elementStyle
+                            }
+                            {...elementAttributes}
+                            className={getAllClasses(...classes)}
+                        >
+                            {content}
+                        </Link>
+                    </div>
+                );
+            }}
         </ElementRoot>
     );
 };

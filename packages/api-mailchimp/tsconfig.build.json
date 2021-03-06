@@ -4,21 +4,17 @@
   "exclude": [
     "node_modules",
     "./dist",
-    "../graphql",
+    "../handler-graphql",
     "../api-security",
-    "../api-settings-manager",
     "../commodo",
-    "../commodo-graphql"
+    "../handler"
   ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "declarationDir": "./dist"
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
   },
-  "references": [
-    { "path": "../graphql/tsconfig.build.json" },
-    { "path": "../api-security/tsconfig.build.json" },
-    { "path": "../api-settings-manager/tsconfig.build.json" },
-    { "path": "../commodo-graphql/tsconfig.build.json" }
-  ]
+  "references": []
 }

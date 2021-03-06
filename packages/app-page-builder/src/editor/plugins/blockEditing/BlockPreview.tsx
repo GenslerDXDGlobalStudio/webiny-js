@@ -1,19 +1,31 @@
 import * as React from "react";
 import { ButtonFloating, IconButton } from "@webiny/ui/Button";
 import { Elevation } from "@webiny/ui/Elevation";
-import { ReactComponent as AddIcon } from "@webiny/app-page-builder/editor/assets/icons/add.svg";
+import { ReactComponent as AddIcon } from "../../assets/icons/add.svg";
 import { Tooltip } from "@webiny/ui/Tooltip";
 import { Typography } from "@webiny/ui/Typography";
 import { CircularProgress } from "@webiny/ui/Progress";
 import { ConfirmationDialog } from "@webiny/ui/ConfirmationDialog";
 import { ReactComponent as EditIcon } from "./icons/round-edit-24px.svg";
-import { ReactComponent as DeleteIcon } from "./icons/round-close-24px.svg";
+import { ReactComponent as DeleteIcon } from "./icons/delete-24dpx.svg";
 import * as Styled from "./StyledComponents";
 import kebabCase from "lodash/kebabCase";
 
 const BlockPreview = props => {
-    const { plugin, addBlockToContent, deactivatePlugin, onEdit, onDelete } = props;
-
+    const { plugin, addBlockToContent, onEdit, onDelete } = props;
+    const onClickToAddHandler = ev => {
+        addBlockToContent(plugin);
+        if (ev.shitfKey) {
+            return;
+        }
+        // eventActionHandler.trigger(new TogglePluginEventAction({
+        //     name: "pb-editor-search-blocks-bar"
+        // }))
+        //
+        // activatePluginAction({
+        //     name: "pb-editor-search-blocks-bar",
+        // })
+    };
     return (
         <Elevation
             z={1}
@@ -26,13 +38,7 @@ const BlockPreview = props => {
                 <Styled.AddBlock className={"add-block"}>
                     <ButtonFloating
                         label={"Click to Add"}
-                        onClick={e => {
-                            addBlockToContent(plugin);
-                            !e.shiftKey &&
-                                deactivatePlugin({
-                                    name: "pb-editor-search-blocks-bar"
-                                });
-                        }}
+                        onClick={onClickToAddHandler}
                         icon={<AddIcon />}
                     />
                 </Styled.AddBlock>

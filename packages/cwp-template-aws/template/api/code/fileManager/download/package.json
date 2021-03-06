@@ -1,0 +1,13 @@
+{
+  "name": "api-file-manager-download",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "yarn webiny run build"
+  },
+  "dependencies": {
+    "@webiny/api-file-manager": "latest",
+    "@webiny/cli": "latest",
+    "@webiny/handler-aws": "latest",
+    "@webiny/project-utils": "latest"
+  }
+}

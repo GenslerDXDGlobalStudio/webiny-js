@@ -1,41 +1,33 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { SplitView, LeftPanel, RightPanel } from "@webiny/app-admin/components/SplitView";
-import { FloatingActionButton } from "@webiny/app-admin/components/FloatingActionButton";
 import MenusDataList from "./MenusDataList";
 import MenusForm from "./MenusForm";
-import { CrudProvider } from "@webiny/app-admin/contexts/Crud";
-import { READ_MENU, LIST_MENUS, CREATE_MENU, UPDATE_MENU, DELETE_MENU } from "./graphql";
+import { useSecurity } from "@webiny/app-security";
 
-function Menus() {
+const Menus = () => {
+    const { identity } = useSecurity();
+    const pbMenuPermission = useMemo(() => {
+        return identity.getPermission("pb.menu");
+    }, []);
+
+    const canCreate = useMemo(() => {
+        if (typeof pbMenuPermission.rwd === "string") {
+            return pbMenuPermission.rwd.includes("w");
+        }
+
+        return true;
+    }, []);
+
     return (
-        <CrudProvider
-            delete={DELETE_MENU}
-            read={READ_MENU}
-            create={CREATE_MENU}
-            update={UPDATE_MENU}
-            list={{
-                query: LIST_MENUS,
-                variables: { sort: { savedOn: -1 } }
-            }}
-        >
-            {({ actions }) => (
-                <>
-                    <SplitView>
-                        <LeftPanel span={3}>
-                            <MenusDataList />
-                        </LeftPanel>
-                        <RightPanel span={9}>
-                            <MenusForm />
-                        </RightPanel>
-                    </SplitView>
-                    <FloatingActionButton
-                        data-testid="new-record-button"
-                        onClick={actions.resetForm}
-                    />
-                </>
-            )}
-        </CrudProvider>
+        <SplitView>
+            <LeftPanel span={3}>
+                <MenusDataList canCreate={canCreate} />
+            </LeftPanel>
+            <RightPanel span={9}>
+                <MenusForm canCreate={canCreate} />
+            </RightPanel>
+        </SplitView>
     );
-}
+};
 
 export default Menus;

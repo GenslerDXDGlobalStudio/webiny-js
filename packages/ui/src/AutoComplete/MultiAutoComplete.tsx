@@ -1,14 +1,14 @@
 import * as React from "react";
 import Downshift from "downshift";
 import MaterialSpinner from "react-spinner-material";
-import { Input } from "@webiny/ui/Input";
-import { Chips, Chip } from "@webiny/ui/Chips";
+import { Input } from "../Input";
+import { Chips, Chip } from "../Chips";
 import { getOptionValue, getOptionText, findInAliases } from "./utils";
 
 import { ReactComponent as BaselineCloseIcon } from "./icons/baseline-close-24px.svg";
 import classNames from "classnames";
-import { Elevation } from "@webiny/ui/Elevation";
-import { Typography } from "@webiny/ui/Typography";
+import { Elevation } from "../Elevation";
+import { Typography } from "../Typography";
 import { autoCompleteStyle, suggestionList } from "./styles";
 
 import { AutoCompleteBaseProps } from "./types";
@@ -33,10 +33,6 @@ type State = {
 };
 
 function Spinner() {
-    if (process.env.REACT_APP_ENV === "ssr") {
-        return null;
-    }
-
     return <MaterialSpinner size={24} spinnerColor={"#fa5723"} spinnerWidth={2} visible />;
 }
 
@@ -199,11 +195,11 @@ export class MultiAutoComplete extends React.Component<MultiAutoCompleteProps, S
                                 key={`${getOptionValue(item, this.props)}-${index}`}
                                 trailingIcon={<BaselineCloseIcon />}
                                 onRemove={() => {
-                                    // On removal, let's update the value and call "onChange" callback.
                                     if (onChange) {
-                                        const newValue = [...value];
-                                        newValue.splice(index, 1);
-                                        onChange(newValue);
+                                        onChange([
+                                            ...value.slice(0, index),
+                                            ...value.slice(index + 1)
+                                        ]);
                                     }
                                 }}
                             />
@@ -235,7 +231,7 @@ export class MultiAutoComplete extends React.Component<MultiAutoCompleteProps, S
         const options = this.getOptions();
 
         return (
-            <div className={autoCompleteStyle}>
+            <div className={classNames(autoCompleteStyle, props.className)}>
                 <Downshift
                     defaultSelectedItem={null}
                     // @ts-ignore
@@ -253,6 +249,7 @@ export class MultiAutoComplete extends React.Component<MultiAutoCompleteProps, S
                         }
 
                         if (this.assignedValueAfterClearing.set) {
+                            this.setState({ inputValue: "" });
                             this.assignedValueAfterClearing.set = false;
                             if (Array.isArray(value)) {
                                 onChange &&

@@ -1,32 +1,175 @@
-import { ComponentType, ReactElement, ReactNode } from "react";
-import { Value } from "slate";
-import { Plugin as SlatePlugin, Editor } from "slate-react";
+import React, { ComponentType, ReactElement, ReactNode } from "react";
+import { DragObjectWithTypeWithTarget } from "./editor/components/Droppable";
+import { BaseEventAction, EventAction } from "./editor/recoil/eventActions";
+import { PluginsAtomType } from "./editor/recoil/modules";
+import { PbState } from "./editor/recoil/modules/types";
 import { Plugin } from "@webiny/app/types";
 import { BindComponent } from "@webiny/form/Bind";
-import { Reducer as ReduxReducer, Store as ReduxStore } from "redux";
-import {
-    PbPageDetailsContextValue,
-    PbPageRevision
-} from "./admin/contexts/PageDetails/PageDetailsContext";
 import { IconPrefix, IconName } from "@fortawesome/fontawesome-svg-core";
-import { MenuButtonProps } from "@webiny/app-page-builder/editor/components/Slate/Menu";
-import { EditorBarProps } from "@webiny/app-page-builder/editor/components/Editor/Bar";
-import { Form } from "@webiny/form/Form";
-export { Redux } from "@webiny/app-page-builder/editor/redux";
-import { Item } from "@webiny/app-admin/plugins/Menu/Navigation/components";
+import { Form, FormSetValue } from "@webiny/form/Form";
+import { Item } from "@webiny/app-admin/plugins/menu/Navigation/components";
 
 export type PbMenuSettingsItemPlugin = Plugin & {
     type: "menu-settings-page-builder";
     render(props: { Item: typeof Item }): React.ReactNode;
 };
 
+export type PbElementDataSettingsSpacingValueType = {
+    all?: string;
+    top?: string;
+    right?: string;
+    bottom?: string;
+    left?: string;
+};
+export type PbElementDataSettingsBackgroundType = {
+    color?: string;
+    image?: {
+        scaling?: string;
+        position?: string;
+        file?: {
+            src?: string;
+        };
+    };
+};
+export type PbElementDataSettingsMarginType = {
+    advanced?: boolean;
+    mobile?: PbElementDataSettingsSpacingValueType;
+    desktop?: PbElementDataSettingsSpacingValueType;
+};
+export type PbElementDataSettingsPaddingType = {
+    advanced?: boolean;
+    mobile?: PbElementDataSettingsSpacingValueType;
+    desktop?: PbElementDataSettingsSpacingValueType;
+};
+export type PbElementDataSettingsBorderType = {
+    width?:
+        | number
+        | {
+              all?: number;
+              top?: number;
+              right?: number;
+              bottom?: number;
+              left?: number;
+          };
+    style?: "none" | "solid" | "dashed" | "dotted";
+    radius?:
+        | number
+        | {
+              all?: number;
+              topLeft?: number;
+              topRight?: number;
+              bottomLeft?: number;
+              bottomRight?: number;
+          };
+    borders?: {
+        top?: boolean;
+        right?: boolean;
+        bottom?: boolean;
+        left?: boolean;
+    };
+};
+export type PbElementDataTextType = {
+    color?: string;
+    alignment: string;
+    typography: string;
+    tag: string;
+    data: {
+        text: string;
+    };
+};
+export type PbElementDataImageType = {
+    width?: string | number;
+    height?: string | number;
+    file?: {
+        id?: string;
+        src?: string;
+    };
+    title?: string;
+};
+export type PbElementDataIconType = {
+    id?: [string, string];
+    width?: number;
+    color?: string;
+    svg?: string;
+    position?: string;
+};
+export type PbElementDataSettingsFormType = {
+    parent?: string;
+    revision?: string;
+};
+export enum AlignmentTypesEnum {
+    HORIZONTAL_LEFT = "horizontalLeft",
+    HORIZONTAL_CENTER = "horizontalCenter",
+    HORIZONTAL_RIGHT = "horizontalRight",
+    VERTICAL_TOP = "verticalTop",
+    VERTICAL_CENTER = "verticalCenter",
+    VERTICAL_BOTTOM = "verticalBottom"
+}
+export type PbElementDataSettingsType = {
+    alignment?: AlignmentTypesEnum;
+    horizontalAlign?: "left" | "center" | "right" | "justify";
+    horizontalAlignFlex?: "flex-start" | "center" | "flex-end";
+    verticalAlign?: "start" | "center" | "end";
+    margin?: PbElementDataSettingsMarginType;
+    padding?: PbElementDataSettingsPaddingType;
+    height?: {
+        value?: number;
+    };
+    background?: PbElementDataSettingsBackgroundType;
+    border?: PbElementDataSettingsBorderType;
+    grid?: {
+        cellsType?: string;
+        size?: number;
+    };
+    columnWidth?: {
+        value?: string;
+    };
+    width?: {
+        value?: string;
+    };
+    className?: string;
+    form?: PbElementDataSettingsFormType;
+    [key: string]: any;
+};
+export type PbElementDataType = {
+    settings?: PbElementDataSettingsType;
+    // this needs to be any since editor can be changed
+    text?: PbElementDataTextType;
+    image?: PbElementDataImageType;
+    buttonText?: string;
+    link?: {
+        href?: string;
+        newTab?: boolean;
+    };
+    type?: string;
+    icon?: PbElementDataIconType;
+    source?: {
+        url?: string;
+    };
+    oembed?: {
+        source?: {
+            url?: string;
+        };
+        html?: string;
+    };
+    width?: number;
+    [key: string]: any;
+};
+
+export type PbEditorElement = {
+    id: string;
+    type: string;
+    data: PbElementDataType;
+    parent?: string;
+    elements: (string | PbEditorElement)[];
+    [key: string]: any;
+};
+
 export type PbElement = {
     id: string;
-    path: string;
     type: string;
-    elements: Array<PbElement>;
-    data: { [key: string]: any };
-    [key: string]: any;
+    data: PbElementDataType;
+    elements: PbElement[];
 };
 
 export type PbTheme = {
@@ -60,32 +203,38 @@ export type PbDefaultPagePlugin = Plugin & {
     component: React.ComponentType<any>;
 };
 
-export type PbPageLayoutComponentPlugin = Plugin & {
-    componentType: string;
-    component: React.ComponentType<any>;
-};
-
 export type PbPageData = {
+    id: string;
+    path: string;
     title?: string;
     content: any;
-    seo?: {
-        title: string;
-        description: string;
-        meta: { name: string; content: string }[];
-    };
-    social?: {
-        title: string;
-        description: string;
-        meta: { property: string; content: string }[];
-        image: {
-            src: string;
-        };
-    };
     settings?: {
         general?: {
             layout?: string;
         };
+        seo?: {
+            title: string;
+            description: string;
+            meta: { name: string; content: string }[];
+        };
+        social?: {
+            title: string;
+            description: string;
+            meta: { property: string; content: string }[];
+            image: {
+                src: string;
+            };
+        };
     };
+};
+
+export type PbPageRevision = {
+    id: string;
+    locked: boolean;
+    savedOn: string;
+    status: string;
+    title: string;
+    version: number;
 };
 
 export type PbRenderElementPlugin = Plugin & {
@@ -127,60 +276,10 @@ export type PbPageElementPagesListComponentPlugin = Plugin & {
     component: ComponentType<any>;
 };
 
-export type PbRenderSlateEditorPlugin = Plugin & {
-    type: "pb-render-slate-editor";
-    slate: SlatePlugin;
-};
-
 export type PbAddonRenderPlugin = Plugin & {
     type: "addon-render";
     component: ReactElement;
 };
-
-export type PbShallowElement = Omit<PbElement, "elements"> & { elements: string[] };
-
-export type Action = {
-    type: string;
-    payload: { [key: string]: any };
-    meta: { [key: string]: any };
-};
-
-export type ActionOptions = {
-    log?: boolean;
-};
-
-export type StatePathGetter = (action: Action) => string;
-
-export type StatePath = null | string | StatePathGetter;
-export type Reducer = ReduxReducer;
-
-export type ReducerFactory = () => Reducer;
-
-export type Store = ReduxStore;
-
-export type State = {
-    elements?: { [key: string]: PbShallowElement };
-    page?: { [key: string]: any };
-    revisions?: Array<{ [key: string]: any }>;
-    ui?: { [key: string]: any };
-};
-
-export type MiddlewareParams = {
-    store: Store;
-    next: Function;
-    action: Action;
-};
-
-export type MiddlewareFunction = (params: MiddlewareParams) => any;
-export type ActionCreator = (payload?: any, meta?: { [key: string]: any }) => Action;
-
-export type PbEditorReduxMiddlewarePlugin = Plugin & {
-    type: "pb-editor-redux-middleware";
-    actions: string[];
-    middleware: MiddlewareFunction;
-};
-
-export { PbPageDetailsContextValue, PbPageRevision };
 
 export type PbDocumentElementPlugin = Plugin & {
     elementType: "document";
@@ -190,11 +289,7 @@ export type PbDocumentElementPlugin = Plugin & {
 
 export type PbPageDetailsRevisionContentPlugin = Plugin & {
     type: "pb-page-details-revision-content";
-    render(params: {
-        pageDetails: PbPageDetailsContextValue;
-        loading: boolean;
-        refreshPages: () => void;
-    }): ReactElement;
+    render(params: { page: Record<string, any>; getPageQuery: any }): ReactElement;
 };
 
 export type PbPageDetailsHeaderRightOptionsMenuItemPlugin = Plugin & {
@@ -204,11 +299,7 @@ export type PbPageDetailsHeaderRightOptionsMenuItemPlugin = Plugin & {
 
 export type PbPageDetailsRevisionContentPreviewPlugin = Plugin & {
     type: "pb-page-details-revision-content-preview";
-    render(params: {
-        pageDetails: PbPageDetailsContextValue;
-        loading: boolean;
-        refreshPages: () => void;
-    }): ReactElement;
+    render(params: { page: Record<string, any>; getPageQuery: any }): ReactElement;
 };
 
 export type PbMenuItemPlugin = Plugin & {
@@ -238,6 +329,8 @@ export type PbEditorPageElementGroupPlugin = Plugin & {
         title: string;
         // Icon rendered in the toolbar.
         icon: ReactElement;
+        // Empty element group view rendered in the toolbar.
+        emptyView?: ReactElement;
     };
 };
 
@@ -259,28 +352,35 @@ export type PbEditorPageElementPlugin = Plugin & {
     // Whitelist elements that can accept this element (for drag&drop interaction)
     target?: string[];
     // Array of element settings plugin names.
-    settings?: Array<string>;
+    settings?: Array<string | Array<string | any>>;
     // A function to create an element data structure.
-    create: (options: { [key: string]: any }, parent?: PbElement) => Omit<PbElement, "id" | "path">;
+    create: (
+        options: { [key: string]: any },
+        parent?: PbEditorElement
+    ) => Omit<PbEditorElement, "id">;
     // A function to render an element in the editor.
-    render: (params: { theme?: PbTheme; element: PbElement }) => ReactNode;
+    render: (params: { theme?: PbTheme; element: PbEditorElement; isActive: boolean }) => ReactNode;
     // A function to check if an element can be deleted.
-    canDelete?: (params: { element: PbElement }) => boolean;
+    canDelete?: (params: { element: PbEditorElement }) => boolean;
     // Executed when another element is dropped on the drop zones of current element.
     onReceived?: (params: {
-        store?: Store;
-        source: PbElement | { type: string; path?: string };
-        target: PbElement;
+        state?: EventActionHandlerCallableState;
+        meta: EventActionHandlerMeta;
+        source: PbEditorElement | DragObjectWithTypeWithTarget;
+        target: PbEditorElement;
         position: number | null;
-    }) => void;
+    }) => EventActionHandlerActionCallableResponse;
     // Executed when an immediate child element is deleted
-    onChildDeleted?: (params: { element: PbElement; child: PbElement }) => void;
+    onChildDeleted?: (params: {
+        element: PbEditorElement;
+        child: PbEditorElement;
+    }) => PbEditorElement | undefined;
     // Executed after element was created
     onCreate?: string;
     // Render element preview (used when creating element screenshots; not all elements have a simple DOM representation
     // so this callback is used to customize the look of the element in a PNG image)
     renderElementPreview?: (params: {
-        element: PbElement;
+        element: PbEditorElement;
         width: number;
         height: number;
     }) => ReactElement;
@@ -288,7 +388,7 @@ export type PbEditorPageElementPlugin = Plugin & {
 
 export type PbEditorPageElementActionPlugin = Plugin & {
     type: "pb-editor-page-element-action";
-    render: (params: { element: PbElement; plugin: PbEditorPageElementPlugin }) => ReactNode;
+    render: (params: { element: PbEditorElement; plugin: PbEditorPageElementPlugin }) => ReactNode;
 };
 
 export type PbPageDetailsPlugin = Plugin & {
@@ -306,7 +406,12 @@ export type PbEditorPageSettingsPlugin = Plugin & {
     /* GraphQL query fields to include in the `settings` subselect */
     fields: string;
     /* Render function that handles the specified `fields` */
-    render: (params: { form: Form; Bind: BindComponent }) => ReactNode;
+    render: (params: {
+        data: Record<string, any>;
+        setValue: FormSetValue;
+        form: Form;
+        Bind: BindComponent;
+    }) => ReactNode;
 };
 
 export type PbIcon = {
@@ -329,36 +434,14 @@ export type PbIconsPlugin = Plugin & {
     getIcons(): PbIcon[];
 };
 
-export type PbEditorSlateEditorPlugin = Plugin & {
-    type: "pb-editor-slate-editor";
-    slate: SlatePlugin;
-};
-
-export type PbEditorSlateMenuItemPlugin = Plugin & {
-    type: "pb-editor-slate-menu-item";
-    render(params: {
-        MenuButton: ComponentType<MenuButtonProps>;
-        value: Value;
-        onChange;
-        editor: Editor;
-        activatePlugin;
-    }): ReactElement;
-    renderDialog?: (params: {
-        onChange(change: Editor): void;
-        editor: Editor;
-        open: boolean;
-        closeDialog(): void;
-        activePlugin: {
-            plugin: string;
-            value: { [key: string]: any };
-        };
-        activatePlugin(name: string): void;
-    }) => ReactElement;
+export type PbEditorBarPluginShouldRenderProps = {
+    plugins: PluginsAtomType;
+    activeElement: any;
 };
 
 export type PbEditorBarPlugin = Plugin & {
     type: "pb-editor-bar";
-    shouldRender(props: EditorBarProps): boolean;
+    shouldRender(props: PbEditorBarPluginShouldRenderProps): boolean;
     render(): ReactElement;
 };
 
@@ -369,6 +452,11 @@ export type PbEditorContentPlugin = Plugin & {
 
 export type PbEditorDefaultBarLeftPlugin = Plugin & {
     type: "pb-editor-default-bar-left";
+    render(): ReactElement;
+};
+
+export type PbEditorDefaultBarCenterPlugin = Plugin & {
+    type: "pb-editor-default-bar-center";
     render(): ReactElement;
 };
 
@@ -408,7 +496,7 @@ export type PbEditorBlockPlugin = Plugin & {
             aspectRatio: number;
         };
     };
-    create(): PbElement;
+    create(): PbEditorElement;
     preview(): ReactElement;
 };
 
@@ -423,13 +511,145 @@ export type PbEditorBlockCategoryPlugin = Plugin & {
 export type PbEditorPageElementSettingsPlugin = Plugin & {
     type: "pb-editor-page-element-settings";
     renderAction(params: { options?: any }): ReactElement;
-    renderMenu?: (params: { options?: any }) => ReactElement;
+    elements?: boolean | string[];
+};
+
+export type PbEditorPageElementStyleSettingsPlugin = Plugin & {
+    type: "pb-editor-page-element-style-settings";
+    render(params: { options?: any }): ReactElement;
     elements?: boolean | string[];
 };
 
 export type PbEditorPageElementAdvancedSettingsPlugin = Plugin & {
     type: "pb-editor-page-element-advanced-settings";
     elementType: string;
-    render(params?: { Bind: BindComponent; data: any }): ReactElement;
+    render(params?: { Bind: BindComponent; data: any; submit: () => void }): ReactElement;
     onSave?: (data: FormData) => FormData;
 };
+
+export type PbEditorEventActionPlugin = Plugin & {
+    type: "pb-editor-event-action-plugin";
+    name: string;
+    // returns an unregister event action callable
+    // please have one action per plugin
+    // you can register more but then unregistering won't work properly
+    onEditorMount: (handler: EventActionHandler) => () => void;
+    // runs when editor is unmounting
+    // by default it runs unregister callable
+    // but dev can do what ever and then run unregister callable - or not
+    onEditorUnmount?: (handler: EventActionHandler, cb: () => void) => void;
+};
+
+export type PbEditorGridPresetPluginType = Plugin & {
+    name: string;
+    type: "pb-editor-grid-preset";
+    cellsType: string;
+    icon: React.FunctionComponent;
+};
+// this will run when saving the element for later use
+export type PbEditorPageElementSaveActionPlugin = Plugin & {
+    type: "pb-editor-page-element-save-action";
+    elementType: string;
+    onSave: (element: PbEditorElement) => PbEditorElement;
+};
+
+export type PbEditorPageElementSettingsRenderComponentProps = {
+    defaultAccordionValue?: boolean;
+};
+
+export type PbConfigPluginType = Plugin & {
+    type: "pb-config";
+    config(): PbConfigType;
+};
+
+export type PbConfigType = {
+    maxEventActionsNesting: number;
+};
+
+export enum DisplayMode {
+    DESKTOP = "desktop",
+    TABLET = "tablet",
+    MOBILE_LANDSCAPE = "mobile-landscape",
+    MOBILE_PORTRAIT = "mobile-portrait"
+}
+
+export type PbEditorResponsiveModePlugin = Plugin & {
+    type: "pb-editor-responsive-mode";
+    config: {
+        displayMode: string;
+        toolTip: {
+            title: string;
+            subTitle: string;
+            body: string;
+            subTitleIcon?: ReactNode;
+        };
+        icon: React.ReactElement;
+    };
+};
+
+export type PbRenderResponsiveModePlugin = Plugin & {
+    type: "pb-render-responsive-mode";
+    config: {
+        displayMode: string;
+        maxWidth: number;
+        minWidth: number;
+    };
+};
+
+// ============== EVENT ACTION HANDLER ================= //
+export interface EventActionHandlerCallableState extends PbState {
+    getElementById(id: string): Promise<PbEditorElement>;
+    getElementTree(element?: PbEditorElement): Promise<any>;
+}
+
+export interface EventActionHandler {
+    on(
+        target: EventActionHandlerTarget,
+        callable: EventActionCallable
+    ): EventActionHandlerUnregister;
+    trigger<T extends EventActionHandlerCallableArgs>(
+        ev: EventAction<T>
+    ): Promise<Partial<PbState>>;
+    undo: () => void;
+    redo: () => void;
+    startBatch: () => void;
+    endBatch: () => void;
+    enableHistory: () => void;
+    disableHistory: () => void;
+    getElementTree: (element?: PbEditorElement) => Promise<any>;
+}
+
+export interface EventActionHandlerTarget {
+    new (...args: any[]): EventAction<any>;
+}
+export interface EventActionHandlerUnregister {
+    (): boolean;
+}
+
+export interface EventActionHandlerMeta {
+    client: any;
+    eventActionHandler: EventActionHandler;
+}
+
+export interface EventActionHandlerConfig {
+    maxEventActionsNesting: number;
+}
+
+export interface EventActionHandlerActionCallableResponse {
+    state?: Partial<EventActionHandlerCallableState>;
+    actions?: BaseEventAction[];
+}
+
+export interface EventActionHandlerMutationActionCallable<T, A extends any = any> {
+    (state: T, args?: A): T;
+}
+
+export interface EventActionHandlerCallableArgs {
+    [key: string]: any;
+}
+
+export interface EventActionCallable<T extends EventActionHandlerCallableArgs = any> {
+    (state: EventActionHandlerCallableState, meta: EventActionHandlerMeta, args?: T):
+        | EventActionHandlerActionCallableResponse
+        | Promise<EventActionHandlerActionCallableResponse>;
+}

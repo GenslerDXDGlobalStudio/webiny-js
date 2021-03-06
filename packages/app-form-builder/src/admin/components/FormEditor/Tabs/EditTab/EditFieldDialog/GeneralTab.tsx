@@ -1,12 +1,10 @@
-import React, { useEffect, useCallback, useRef } from "react";
+import React, { useCallback } from "react";
 import { Input } from "@webiny/ui/Input";
 import { Grid, Cell } from "@webiny/ui/Grid";
 import { camelCase } from "lodash";
-import { useFormEditor } from "@webiny/app-form-builder/admin/components/FormEditor/Context";
-import { I18NInput } from "@webiny/app-i18n/admin/components";
-import { useI18N } from "@webiny/app-i18n/hooks/useI18N";
+import { useFormEditor } from "../../../Context";
 import { validation } from "@webiny/validation";
-import { FbFormModelField } from "@webiny/app-form-builder/types";
+import { FbFormModelField } from "../../../../../../types";
 import { FormChildrenFunctionParams } from "@webiny/form/Form";
 
 type GeneralTabProps = {
@@ -16,18 +14,10 @@ type GeneralTabProps = {
 
 const GeneralTab = ({ field, form }: GeneralTabProps) => {
     const { Bind, setValue } = form;
-    const inputRef = useRef(null);
     const { getField, getFieldPlugin } = useFormEditor();
-    const { getValue } = useI18N();
-
-    const setRef = useCallback(ref => (inputRef.current = ref), []);
-
-    useEffect(() => {
-        inputRef.current && inputRef.current.focus();
-    }, []);
 
     const afterChangeLabel = useCallback(value => {
-        setValue("fieldId", camelCase(getValue(value)));
+        setValue("fieldId", camelCase(value));
     }, []);
 
     const uniqueFieldIdValidator = useCallback(fieldId => {
@@ -62,7 +52,7 @@ const GeneralTab = ({ field, form }: GeneralTabProps) => {
                         validators={validation.create("required")}
                         afterChange={afterChangeLabel}
                     >
-                        <I18NInput label={"Label"} inputRef={setRef} />
+                        <Input label={"Label"} autoFocus={true} />
                     </Bind>
                 </Cell>
                 <Cell span={6}>
@@ -75,7 +65,7 @@ const GeneralTab = ({ field, form }: GeneralTabProps) => {
                 </Cell>
                 <Cell span={12}>
                     <Bind name={"helpText"}>
-                        <I18NInput label={"Help text"} description={"Help text (optional)"} />
+                        <Input label={"Help text"} description={"Help text (optional)"} />
                     </Bind>
                 </Cell>
             </Grid>

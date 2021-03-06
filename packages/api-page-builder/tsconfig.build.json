@@ -3,25 +3,33 @@
   "include": ["./src"],
   "exclude": [
     "node_modules",
-    "../graphql",
+    "../plugins",
+    "../db",
+    "../api-i18n-content",
+    "../api-plugin-elastic-search-client",
+    "../api-dynamodb-to-elasticsearch",
     "../api-security",
-    "../api-settings-manager",
-    "../commodo",
-    "../commodo-graphql",
-    "../handler-ssr",
-    "../validation"
+    "../handler",
+    "../handler-args",
+    "../handler-client",
+    "../handler-db",
+    "../validation",
+    "../api-i18n",
+    "../handler-graphql",
+    "../handler-aws",
+    "../db-dynamodb",
+    "../error",
+    "../api-file-manager",
+    "../api-security-tenancy",
+    "../api-prerendering-service",
+    "../pulumi-sdk"
   ],
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist",
-    "declarationDir": "./dist"
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
   },
-  "references": [
-    { "path": "../graphql/tsconfig.build.json" },
-    { "path": "../api-security/tsconfig.build.json" },
-    { "path": "../api-settings-manager/tsconfig.build.json" },
-    { "path": "../commodo-graphql/tsconfig.build.json" },
-    { "path": "../handler-ssr/tsconfig.build.json" },
-    { "path": "../validation/tsconfig.build.json" }
-  ]
+  "references": []
 }

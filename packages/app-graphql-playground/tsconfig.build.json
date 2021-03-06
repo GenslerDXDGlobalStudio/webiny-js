@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.build.json",
+  "include": ["src"],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/**",
+    "./dist",
+    "../app",
+    "../app-i18n",
+    "../app-security",
+    "../app-admin",
+    "../ui",
+    "../react-router",
+    "../plugins"
+  ],
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declarationDir": "./dist",
+    "paths": {},
+    "baseUrl": "."
+  },
+  "references": []
+}

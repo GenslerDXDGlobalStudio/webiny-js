@@ -1,12 +1,14 @@
 import React from "react";
-import styled from "@emotion/styled";
+import { useRecoilValue } from "recoil";
 import { keyframes } from "emotion";
-import { connect } from "@webiny/app-page-builder/editor/redux";
+import styled from "@emotion/styled";
 import { Elevation } from "@webiny/ui/Elevation";
 import { ButtonFloating } from "@webiny/ui/Button";
-import { togglePlugin } from "@webiny/app-page-builder/editor/actions";
-import { getContent } from "@webiny/app-page-builder/editor/selectors";
-import { ReactComponent as AddIcon } from "@webiny/app-page-builder/editor/assets/icons/add.svg";
+import { useEventActionHandler } from "../../hooks/useEventActionHandler";
+import { ReactComponent as AddIcon } from "../../assets/icons/add.svg";
+import { TogglePluginActionEvent } from "../../recoil/actions";
+import { uiAtom } from "../../recoil/modules";
+import { elementsInContentTotalSelector } from "../../recoil/modules/page/selectors/elementsInContentTotalSelector";
 
 const pulse = keyframes`
   0% {
@@ -20,55 +22,67 @@ const pulse = keyframes`
   }
 `;
 
-const AddBlockContainer = styled("div")({
-    position: "fixed",
-    zIndex: 11,
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%,-50%)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "150px",
-    height: "100px",
-    borderRadius: 2,
-    color: "var(--mdc-theme-on-surface)",
-    marginLeft: 54
+const AddBlockContainer = styled<"div", { displayMode: string }>("div")(({ displayMode }) => {
+    const marginLeft = displayMode === "desktop" ? 54 : 0;
+    return {
+        position: "absolute",
+        zIndex: 11,
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%,-50%)",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        width: "150px",
+        height: "100px",
+        borderRadius: 2,
+        color: "var(--mdc-theme-on-surface)",
+        marginLeft,
+
+        "& .elevation": {
+            backgroundColor: "var(--mdc-theme-surface)",
+            padding: displayMode === "mobile-portrait" ? "16px 8px" : "30px 20px",
+            transform: "translateY(-50%)",
+            borderRadius: 2
+        }
+    };
 });
 
-const AddBlockContent = styled("div")({
-    width: 300,
+const AddBlockContent = styled<"div", { displayMode: string }>("div")(({ displayMode }) => ({
+    width: displayMode === "mobile-portrait" ? 280 : 300,
     margin: 5,
     textAlign: "center",
     display: "flex",
     alignItems: "center"
-});
+}));
 
-const AddContent = ({ count, togglePlugin }) => {
-    if (count) {
+const AddContent = () => {
+    const { displayMode } = useRecoilValue(uiAtom);
+    const totalElements = useRecoilValue(elementsInContentTotalSelector);
+    const eventActionHandler = useEventActionHandler();
+    if (totalElements) {
         return null;
     }
 
+    const onClickHandler = () => {
+        eventActionHandler.trigger(
+            new TogglePluginActionEvent({
+                name: "pb-editor-search-blocks-bar"
+            })
+        );
+    };
     return (
-        <AddBlockContainer data-type={"container"}>
-            <Elevation
-                z={4}
-                style={{
-                    backgroundColor: "var(--mdc-theme-surface)",
-                    padding: "30px 20px",
-                    transform: "translateY(-50%)",
-                    borderRadius: 2
-                }}
-            >
-                <AddBlockContent>
+        <AddBlockContainer data-type={"container"} displayMode={displayMode}>
+            <Elevation z={4} className={"elevation"}>
+                <AddBlockContent displayMode={displayMode}>
                     Click the
                     <ButtonFloating
                         data-testid={"pb-content-add-block-button"}
                         style={{ animation: pulse + " 3s ease infinite", margin: "0 10px" }}
                         small
                         icon={<AddIcon />}
-                        onClick={() => togglePlugin({ name: "pb-editor-search-blocks-bar" })}
+                        onClick={onClickHandler}
                     />
                     to start adding content
                 </AddBlockContent>
@@ -77,6 +91,4 @@ const AddContent = ({ count, togglePlugin }) => {
     );
 };
 
-export default connect<any, any, any>(state => ({ count: getContent(state).elements.length }), {
-    togglePlugin
-})(React.memo(AddContent));
+export default AddContent;

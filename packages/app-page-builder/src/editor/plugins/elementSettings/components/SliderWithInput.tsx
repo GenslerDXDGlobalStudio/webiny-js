@@ -1,40 +1,61 @@
-import * as React from "react";
-import { connect } from "react-redux";
-import { get } from "lodash";
-import { Input } from "@webiny/ui/Input";
+import React from "react";
+import { elementWithChildrenByIdSelector, activeElementAtom } from "../../../recoil/modules";
+import lodashGet from "lodash/get";
 import { Grid, Cell } from "@webiny/ui/Grid";
 import { Icon } from "@webiny/ui/Icon";
 import { Slider } from "@webiny/ui/Slider";
-import { InputContainer } from "@webiny/app-page-builder/editor/plugins/elementSettings/components/StyledComponents";
-import { getActiveElement } from "@webiny/app-page-builder/editor/selectors";
+import { useRecoilValue } from "recoil";
+import InputField from "./InputField";
 
-const SliderWithInput = ({ value, icon, placeholder, updateValue, updatePreview, className }) => {
+type SliderWithInputPropsType = {
+    icon: React.ReactElement;
+    valueKey: string;
+    placeholder?: string;
+    updateValue: (value: any) => void;
+    updatePreview: (value: any) => void;
+    className?: string;
+    // TODO check - not used anywhere
+    label?: string;
+    step?: number;
+    max?: number;
+};
+const SliderWithInput: React.FunctionComponent<SliderWithInputPropsType> = ({
+    icon,
+    placeholder,
+    updateValue,
+    updatePreview,
+    className,
+    valueKey,
+    max = 100,
+    step = 1
+}) => {
+    const activeElementId = useRecoilValue(activeElementAtom);
+    const element = useRecoilValue(elementWithChildrenByIdSelector(activeElementId));
+    const value = lodashGet(element, valueKey, 0);
     return (
         <Grid className={className}>
-            <Cell span={2}>
+            <Cell align={"middle"} span={2}>
                 <Icon icon={icon} />
             </Cell>
-            <Cell span={6}>
+            <Cell align={"middle"} span={6}>
                 <Slider
                     value={value}
                     onChange={updateValue}
                     onInput={updatePreview}
                     min={0}
-                    max={100}
-                    step={1}
+                    max={max}
+                    step={step}
                 />
             </Cell>
-            <Cell span={4}>
-                <InputContainer>
-                    <Input placeholder={placeholder || "px"} value={value} onChange={updateValue} />
-                </InputContainer>
+            <Cell align={"middle"} span={4}>
+                <InputField
+                    placeholder={placeholder || "px"}
+                    value={value}
+                    onChange={updateValue}
+                />
             </Cell>
         </Grid>
     );
 };
 
-export default connect<any, any, any>((state, { valueKey }: any) => {
-    return {
-        value: get(getActiveElement(state), valueKey, 0)
-    };
-})(SliderWithInput);
+export default React.memo(SliderWithInput);

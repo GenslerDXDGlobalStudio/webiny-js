@@ -1,34 +1,35 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Mutation } from "react-apollo";
-import { connect } from "@webiny/app-page-builder/editor/redux";
-import { deactivatePlugin, updateElement } from "@webiny/app-page-builder/editor/actions";
-import { getContent } from "@webiny/app-page-builder/editor/selectors";
-import { useKeyHandler } from "@webiny/app-page-builder/editor/hooks/useKeyHandler";
+import { DeactivatePluginActionEvent, UpdateElementActionEvent } from "../../recoil/actions";
+import { createBlockElements } from "../../helpers";
+import { useEventActionHandler } from "../../hooks/useEventActionHandler";
+import { useMutation } from "@apollo/react-hooks";
+import { useKeyHandler } from "../../hooks/useKeyHandler";
 import { useSnackbar } from "@webiny/app-admin/hooks/useSnackbar";
-import { getPlugins, unregisterPlugin } from "@webiny/plugins";
-import { createBlockElements } from "@webiny/app-page-builder/editor/utils";
+import { plugins } from "@webiny/plugins";
 import { OverlayLayout } from "@webiny/app-admin/components/OverlayLayout";
 import { LeftPanel, RightPanel, SplitView } from "@webiny/app-admin/components/SplitView";
 import { List, ListItem, ListItemGraphic } from "@webiny/ui/List";
 import { Icon } from "@webiny/ui/Icon";
-import { DelayedOnChange } from "@webiny/app-page-builder/editor/components/DelayedOnChange";
+import { DelayedOnChange } from "../../components/DelayedOnChange";
 import { Typography } from "@webiny/ui/Typography";
 
-import { ReactComponent as SearchIcon } from "@webiny/app-page-builder/editor/assets/icons/search.svg";
+import { ReactComponent as SearchIcon } from "../../assets/icons/search.svg";
 import {
     SimpleForm,
     SimpleFormContent,
     SimpleFormHeader
 } from "@webiny/app-admin/components/SimpleForm";
+import { useRecoilValue } from "recoil";
 
 import { ReactComponent as AllIcon } from "./icons/round-clear_all-24px.svg";
-import createBlockPlugin from "@webiny/app-page-builder/admin/utils/createBlockPlugin";
+import createBlockPlugin from "../../../admin/utils/createBlockPlugin";
 import BlocksList from "./BlocksList";
-import { DELETE_ELEMENT, UPDATE_ELEMENT } from "./graphql";
+import { DELETE_PAGE_ELEMENT, UPDATE_PAGE_ELEMENT } from "./graphql";
 import EditBlockDialog from "./EditBlockDialog";
 import { listItem, ListItemTitle, listStyle, TitleContent } from "./SearchBlocksStyled";
 import * as Styled from "./StyledComponents";
-import { PbEditorBlockCategoryPlugin, PbEditorBlockPlugin } from "@webiny/app-page-builder/types";
+import { PbEditorBlockCategoryPlugin, PbEditorBlockPlugin } from "../../../types";
+import { elementWithChildrenByIdSelector, rootElementAtom } from "../../recoil/modules";
 
 const allBlockCategory: PbEditorBlockCategoryPlugin = {
     type: "pb-editor-block-category",
@@ -59,29 +60,44 @@ const sortBlocks = blocks => {
     });
 };
 
-const SearchBar = props => {
-    const { updateElement, content, deactivatePlugin } = props;
+const SearchBar = () => {
+    const rootElementId = useRecoilValue(rootElementAtom);
+    const content = useRecoilValue(elementWithChildrenByIdSelector(rootElementId));
+    const eventActionHandler = useEventActionHandler();
 
-    const [search, setSearch] = useState("");
+    const [search, setSearch] = useState<string>("");
     const [editingBlock, setEditingBlock] = useState(null);
     const [activeCategory, setActiveCategory] = useState("all");
+
+    const [updatePageElementMutation, { loading: updateInProgress }] = useMutation(
+        UPDATE_PAGE_ELEMENT
+    );
+    const [deletePageElementMutation] = useMutation(DELETE_PAGE_ELEMENT);
 
     const allCategories = useMemo(
         () => [
             allBlockCategory,
-            ...getPlugins<PbEditorBlockCategoryPlugin>("pb-editor-block-category")
+            ...plugins.byType<PbEditorBlockCategoryPlugin>("pb-editor-block-category")
         ],
         []
     );
 
-    const allBlocks = getPlugins<PbEditorBlockPlugin>("pb-editor-block");
+    const allBlocks = plugins.byType<PbEditorBlockPlugin>("pb-editor-block");
 
     const { addKeyHandler, removeKeyHandler } = useKeyHandler();
+
+    const deactivatePlugin = () => {
+        eventActionHandler.trigger(
+            new DeactivatePluginActionEvent({
+                name: "pb-editor-search-blocks-bar"
+            })
+        );
+    };
 
     useEffect(() => {
         addKeyHandler("escape", e => {
             e.preventDefault();
-            deactivatePlugin({ name: "pb-editor-search-blocks-bar" });
+            deactivatePlugin();
         });
 
         return () => removeKeyHandler("escape");
@@ -89,11 +105,18 @@ const SearchBar = props => {
 
     const addBlockToContent = useCallback(
         plugin => {
-            const element = {
+            const element: any = {
                 ...content,
                 elements: [...content.elements, createBlockElements(plugin.name)]
             };
-            updateElement({ element });
+            eventActionHandler.trigger(
+                new UpdateElementActionEvent({
+                    element,
+                    history: true
+                })
+            );
+
+            deactivatePlugin();
         },
         [content]
     );
@@ -148,13 +171,13 @@ const SearchBar = props => {
             }
         });
 
-        const { error } = response.data.pageBuilder.deleteElement;
+        const { error } = response.data.pageBuilder.deletePageElement;
         if (error) {
             showSnackbar(error.message);
             return;
         }
 
-        unregisterPlugin(plugin.name);
+        plugins.unregister(plugin.name);
         showSnackbar(
             <span>
                 Block <strong>{plugin.title}</strong> was deleted!
@@ -175,7 +198,7 @@ const SearchBar = props => {
                 }
             });
 
-            const { error, data } = response.data.pageBuilder.updateElement;
+            const { error, data } = response.data.pageBuilder.updatePageElement;
             if (error) {
                 showSnackbar(error.message);
                 return;
@@ -217,7 +240,7 @@ const SearchBar = props => {
     }, [search]);
 
     const onExited = useCallback(() => {
-        deactivatePlugin({ name: "pb-editor-search-blocks-bar" });
+        deactivatePlugin();
     }, []);
 
     const categoryPlugin = allCategories.find(pl => pl.categoryName === activeCategory);
@@ -249,56 +272,48 @@ const SearchBar = props => {
                     </List>
                 </LeftPanel>
                 <RightPanel span={9}>
-                    <Mutation mutation={UPDATE_ELEMENT}>
-                        {(updateElement, { loading: updateInProgress }) => (
-                            <Mutation mutation={DELETE_ELEMENT}>
-                                {deleteElement =>
-                                    activeCategory && (
-                                        <SimpleForm>
-                                            <SimpleFormHeader
-                                                title={categoryPlugin.title}
-                                                icon={categoryPlugin.icon}
-                                            />
-                                            <SimpleFormContent>
-                                                <Styled.BlockList>
-                                                    <BlocksList
-                                                        category={activeCategory}
-                                                        addBlock={addBlockToContent}
-                                                        deactivatePlugin={deactivatePlugin}
-                                                        blocks={getBlocksList()}
-                                                        onEdit={plugin => setEditingBlock(plugin)}
-                                                        onDelete={plugin =>
-                                                            deleteBlock({
-                                                                plugin,
-                                                                deleteElement
-                                                            })
-                                                        }
-                                                    />
-                                                </Styled.BlockList>
+                    {activeCategory && (
+                        <SimpleForm>
+                            <SimpleFormHeader
+                                title={categoryPlugin.title}
+                                icon={categoryPlugin.icon}
+                            />
+                            <SimpleFormContent>
+                                <Styled.BlockList>
+                                    <BlocksList
+                                        category={activeCategory}
+                                        addBlock={addBlockToContent}
+                                        deactivatePlugin={deactivatePlugin}
+                                        blocks={getBlocksList()}
+                                        onEdit={plugin => setEditingBlock(plugin)}
+                                        onDelete={plugin =>
+                                            deleteBlock({
+                                                plugin,
+                                                deleteElement: deletePageElementMutation
+                                            })
+                                        }
+                                    />
+                                </Styled.BlockList>
 
-                                                <EditBlockDialog
-                                                    onClose={() => setEditingBlock(null)}
-                                                    onSubmit={data =>
-                                                        updateBlock({ data, updateElement })
-                                                    }
-                                                    open={!!editingBlock}
-                                                    plugin={editingBlock}
-                                                    loading={updateInProgress}
-                                                />
-                                            </SimpleFormContent>
-                                        </SimpleForm>
-                                    )
-                                }
-                            </Mutation>
-                        )}
-                    </Mutation>
+                                <EditBlockDialog
+                                    onClose={() => setEditingBlock(null)}
+                                    onSubmit={data =>
+                                        updateBlock({
+                                            data,
+                                            updateElement: updatePageElementMutation
+                                        })
+                                    }
+                                    open={!!editingBlock}
+                                    plugin={editingBlock}
+                                    loading={updateInProgress}
+                                />
+                            </SimpleFormContent>
+                        </SimpleForm>
+                    )}
                 </RightPanel>
             </SplitView>
         </OverlayLayout>
     );
 };
 
-export default connect<any, any, any>(state => ({ content: getContent(state) }), {
-    deactivatePlugin,
-    updateElement
-})(SearchBar);
+export default SearchBar;

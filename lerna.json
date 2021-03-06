@@ -1,8 +1,7 @@
 {
-  "packages": [
-    "packages/*"
-  ],
-  "version": "4.14.0",
+  "packages": ["packages/*"],
+  "version": "5.0.0-beta.4",
+  "npmClient": "yarn",
   "command": {
     "version": {
       "preid": "next",
@@ -14,12 +13,6 @@
         "lerna.json",
         "api/**",
         "apps/**"
-      ],
-      "allowBranch": [
-        "master",
-        "next",
-        "develop",
-        "release-*"
       ],
       "conventionalCommits": true,
       "createRelease": "github",
