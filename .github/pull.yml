@@ -5,7 +5,7 @@ rules:                      # Array of rules
     mergeMethod: hardreset  # Optional, one of [none, merge, squash, rebase, hardreset], Default: none.
     mergeUnstable: false    # Optional, merge pull request even when the mergeable_state is not clean. Default: false
   - base: next
-    upstream: next        # Required. Can be a branch in the same forked repo.
+    upstream: webiny-js:next        # Required. Can be a branch in the same forked repo.
     assignees:              # Optional
       - graeme-asher
     reviewers:              # Optional
