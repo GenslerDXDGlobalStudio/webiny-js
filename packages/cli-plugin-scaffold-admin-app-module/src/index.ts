@@ -52,7 +52,7 @@ export default (): CliCommandScaffoldTemplate<Input> => ({
             return [
                 {
                     name: "entityName",
-                    message: "Enter name of the initial data model",
+                    message: "Enter the name of the initial data model",
                     default: "Book",
                     validate: name => {
                         if (!name.match(/^([a-zA-Z]+)$/)) {
@@ -64,9 +64,9 @@ export default (): CliCommandScaffoldTemplate<Input> => ({
                 },
                 {
                     name: "location",
-                    message: `Enter package location`,
+                    message: `Enter the package location`,
                     default: answers => {
-                        const entityNamePlural = pluralize(Case.camel(answers.entityName));
+                        const entityNamePlural = pluralize(Case.kebab(answers.entityName));
                         return `packages/${entityNamePlural}/admin-app`;
                     },
                     validate: location => {
@@ -84,9 +84,9 @@ export default (): CliCommandScaffoldTemplate<Input> => ({
                 },
                 {
                     name: "packageName",
-                    message: "Enter package name",
+                    message: "Enter the package name",
                     default: answers => {
-                        const entityNamePlural = pluralize(Case.camel(answers.entityName));
+                        const entityNamePlural = pluralize(Case.kebab(answers.entityName));
                         return `@${entityNamePlural}/admin-app`;
                     },
                     validate: packageName => {
@@ -199,6 +199,22 @@ export default (): CliCommandScaffoldTemplate<Input> => ({
             const packageJsonFile = path.resolve(fullLocation, "package.json");
             const packageJson = readJson.sync<PackageJson>(packageJsonFile);
             packageJson.name = packageName;
+
+            const { version } = require("@webiny/cli-plugin-scaffold/package.json");
+
+            // Inject Webiny packages version
+            Object.keys(packageJson.dependencies).forEach(name => {
+                if (name.startsWith("@webiny")) {
+                    packageJson.dependencies[name] = version;
+                }
+            });
+
+            Object.keys(packageJson.devDependencies).forEach(name => {
+                if (name.startsWith("@webiny")) {
+                    packageJson.devDependencies[name] = version;
+                }
+            });
+
             await writeJson(packageJsonFile, packageJson);
             oraSpinner.stopAndPersist({
                 symbol: chalk.green("✔"),
